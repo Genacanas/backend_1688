@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -26,6 +26,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/api/login")
+def login(username: str = Form(...), password: str = Form(...)):
+    admin_user = os.getenv("ADMIN_USERNAME", "AdminRokas")
+    admin_pass = os.getenv("ADMIN_PASSWORD", "o$RRy6aocnlY&R")
+    
+    if username == admin_user and password == admin_pass:
+        # Devolver un token dummy ya que no tenemos un sistema de sesiones complejo
+        return {"access_token": "nichebreaker_admin_token", "token_type": "bearer"}
+    
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
 @app.get("/api/status")
 def get_status():
