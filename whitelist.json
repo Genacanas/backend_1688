@@ -1,0 +1,2438 @@
+[
+  {
+    "id": "122916002",
+    "name": "汽车用品",
+    "name_en": "Automotive Supplies",
+    "subcategories": [
+      {
+        "id": "1212",
+        "name": "影音导航",
+        "name_en": "Audio Video Navigation",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124014003",
+        "name": "汽车配件",
+        "name_en": "Auto Parts",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "79",
+        "name": "美容养护",
+        "name_en": "Beauty & Maintenance",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10104",
+        "name": "车身及附件",
+        "name_en": "Body & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3312",
+        "name": "车载电器",
+        "name_en": "Car Electronics",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "92",
+        "name": "汽车内饰用品",
+        "name_en": "Car Interior Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201888805",
+        "name": "汽车内饰改装",
+        "name_en": "Car Interior Modification",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10108",
+        "name": "车灯",
+        "name_en": "Car Lights",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201355911",
+        "name": "整车",
+        "name_en": "Complete Vehicle",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1231",
+        "name": "电动车",
+        "name_en": "Electric Vehicle",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3308",
+        "name": "外饰/改装/配件",
+        "name_en": "Exterior/Modification/Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3304",
+        "name": "摩托车配附件",
+        "name_en": "Motorcycle Parts & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3311",
+        "name": "安全/应急/自驾",
+        "name_en": "Safety/Emergency/Road Trip",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3307",
+        "name": "座垫脚垫",
+        "name_en": "Seat Cushions & Floor Mats",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "201547801",
+    "name": "日用餐厨饮具",
+    "name_en": "Daily Use Kitchenware & Drinkware",
+    "subcategories": [
+      {
+        "id": "10297",
+        "name": "烘焙用具",
+        "name_en": "Baking Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122320004",
+        "name": "酒具",
+        "name_en": "Barware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121546006",
+        "name": "烧烤用具",
+        "name_en": "BBQ Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201162703",
+        "name": "咖啡具",
+        "name_en": "Coffee Ware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1046721",
+        "name": "饮水用具",
+        "name_en": "Drinkware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127764003",
+        "name": "厨用刀剪具",
+        "name_en": "Kitchen Knives & Scissors",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122146001",
+        "name": "厨房工具",
+        "name_en": "Kitchen Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122548001",
+        "name": "锅、煲",
+        "name_en": "Pots & Pans",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10287",
+        "name": "餐具",
+        "name_en": "Tableware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121548001",
+        "name": "茶具",
+        "name_en": "Tea Ware",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "数码、电脑",
+    "name_en": "Digital & Computer",
+    "subcategories": [
+      {
+        "id": "1046693",
+        "name": "苹果专用配件",
+        "name_en": "Apple Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202047604",
+        "name": "AR / VR 头显设备配件",
+        "name_en": "AR / VR Headset Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "730",
+        "name": "电脑整机",
+        "name_en": "Complete Computers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "731",
+        "name": "电脑硬件及配件",
+        "name_en": "Computer Hardware & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10262",
+        "name": "电脑外设产品",
+        "name_en": "Computer Peripherals",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1033238",
+        "name": "电脑项目合作",
+        "name_en": "Computer Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1032228",
+        "name": "数码配件",
+        "name_en": "Digital Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "727",
+        "name": "数码产品",
+        "name_en": "Digital Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "729",
+        "name": "笔记本电脑配件",
+        "name_en": "Laptop Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201626003",
+        "name": "直播设备及配件",
+        "name_en": "Live Streaming Equipment & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "728",
+        "name": "手机通讯",
+        "name_en": "Mobile Communication",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202062910",
+        "name": "手机号码/套餐/增值业务",
+        "name_en": "Mobile Number / Plan / Value-added Services",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "50911",
+        "name": "手机配件",
+        "name_en": "Mobile Phone Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044130",
+        "name": "手机饰品",
+        "name_en": "Mobile Phone Charms & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "705",
+        "name": "网络设备",
+        "name_en": "Network Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124776003",
+        "name": "摄影摄像及配件",
+        "name_en": "Photography & Videography & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123754001",
+        "name": "智能设备",
+        "name_en": "Smart Devices",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "735",
+        "name": "库存/二手电脑",
+        "name_en": "Stock / Used Computers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1046688",
+        "name": "平板电脑配件",
+        "name_en": "Tablet Accessories",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "59",
+    "name": "五金、工具",
+    "name_en": "Hardware & Tools",
+    "subcategories": [
+      {
+        "id": "1048205",
+        "name": "3D打印机",
+        "name_en": "3D Printer",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201921802",
+        "name": "磨具磨料",
+        "name_en": "Abrasives & Grinding Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032474",
+        "name": "农用工具",
+        "name_en": "Agricultural Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032399",
+        "name": "打气筒",
+        "name_en": "Air Pump / Inflator",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1036013",
+        "name": "服饰箱包五金",
+        "name_en": "Apparel & Luggage Hardware",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201921406",
+        "name": "钳工工具",
+        "name_en": "Benchwork Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201921901",
+        "name": "钳工工作台",
+        "name_en": "Benchwork Workbench",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "121500003",
+        "name": "洗车工具",
+        "name_en": "Car Wash Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032470",
+        "name": "脚轮",
+        "name_en": "Caster Wheel",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1035296",
+        "name": "凿",
+        "name_en": "Chisel",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1457",
+        "name": "涂装设备",
+        "name_en": "Coating Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1036015",
+        "name": "工艺礼品五金",
+        "name_en": "Craft & Gift Hardware",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "202146541",
+        "name": "刃具",
+        "name_en": "Cutting Edge Tools / Blades",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10350",
+        "name": "刀具",
+        "name_en": "Cutting Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1036018",
+        "name": "日用五金",
+        "name_en": "Daily Use Hardware",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1032402",
+        "name": "金刚石工具",
+        "name_en": "Diamond Tools",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "202145469",
+        "name": "适老工具",
+        "name_en": "Elderly Care Tools / Adaptive Tools",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201924501",
+        "name": "电子焊接工具",
+        "name_en": "Electronic Soldering Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121488001",
+        "name": "工程测绘仪器",
+        "name_en": "Engineering Surveying Instruments",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202150523",
+        "name": "锉、刨",
+        "name_en": "Files & Planers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1047258",
+        "name": "园林五金工具",
+        "name_en": "Garden Hardware Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032366",
+        "name": "气焊、气割器材",
+        "name_en": "Gas Welding & Cutting Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10353",
+        "name": "通用五金配件",
+        "name_en": "General Hardware Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032472",
+        "name": "匠作工具",
+        "name_en": "Handcraft Tools / Artisan Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202154415",
+        "name": "手动工具",
+        "name_en": "Hand Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1035440",
+        "name": "五金工具代理加盟",
+        "name_en": "Hardware Tool Agency/Franchise",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1035441",
+        "name": "五金工具项目合作",
+        "name_en": "Hardware Tool Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "124194006",
+        "name": "液压/起重工具",
+        "name_en": "Hydraulic / Lifting Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10352",
+        "name": "刀",
+        "name_en": "Knives",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1227",
+        "name": "起重装卸设备",
+        "name_en": "Lifting & Handling Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3305",
+        "name": "维护工具",
+        "name_en": "Maintenance Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123924001",
+        "name": "手动螺丝刀",
+        "name_en": "Manual Screwdrivers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123926004",
+        "name": "手动扳手",
+        "name_en": "Manual Wrenches",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1033590",
+        "name": "船用五金配件",
+        "name_en": "Marine Hardware Accessories",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1535",
+        "name": "量具",
+        "name_en": "Measuring Gauges",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10212",
+        "name": "量仪",
+        "name_en": "Measuring Instruments",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201914203",
+        "name": "测量工具",
+        "name_en": "Measuring Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1035297",
+        "name": "防爆工具",
+        "name_en": "Non-sparking Tools / Explosion-proof Tools",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1036014",
+        "name": "办公文教五金",
+        "name_en": "Office & Stationery Hardware",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10351",
+        "name": "其他钳工工具",
+        "name_en": "Other Benchwork Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1035288",
+        "name": "其他五金工具",
+        "name_en": "Other Hardware Tools",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "123928001",
+        "name": "钳类工具",
+        "name_en": "Pliers & Clamps",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124270007",
+        "name": "管道工具",
+        "name_en": "Plumbing Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10355",
+        "name": "气动工具",
+        "name_en": "Pneumatic Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032336",
+        "name": "电动工具",
+        "name_en": "Power Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3303",
+        "name": "维修设备",
+        "name_en": "Repair Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121192003",
+        "name": "索具",
+        "name_en": "Rigging Hardware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032409",
+        "name": "锯",
+        "name_en": "Saws",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123924007",
+        "name": "剪刀",
+        "name_en": "Scissors & Shears",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1035442",
+        "name": "库存五金、工具",
+        "name_en": "Stock Hardware, Tools",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1031748",
+        "name": "工具箱包",
+        "name_en": "Tool Box/Bag",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1035526",
+        "name": "工具刷",
+        "name_en": "Tool Brush",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1045749",
+        "name": "工具柜",
+        "name_en": "Tool Cabinet",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1042817",
+        "name": "工具耗材",
+        "name_en": "Tool Consumables",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1046977",
+        "name": "组合工具",
+        "name_en": "Tool Sets",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032077",
+        "name": "运输搬运设备",
+        "name_en": "Transportation & Handling Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1226",
+        "name": "仓储设备",
+        "name_en": "Warehouse Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1456",
+        "name": "电焊、切割设备",
+        "name_en": "Welding & Cutting Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1427",
+        "name": "焊接材料与附件",
+        "name_en": "Welding Materials & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201912704",
+        "name": "作业平台",
+        "name_en": "Work Platform",
+        "level": 1,
+        "has_children": false
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "name": "家用电器",
+    "name_en": "Home Appliances",
+    "subcategories": [
+      {
+        "id": "1047104",
+        "name": "影音电器",
+        "name_en": "Audio & Video Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1047893",
+        "name": "保健电器",
+        "name_en": "Health Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1031833",
+        "name": "家用电器加工",
+        "name_en": "Home Appliance Processing",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "290306",
+        "name": "家电项目合作",
+        "name_en": "Home Appliance Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201972101",
+        "name": "家用医疗电器（器械）",
+        "name_en": "Home Medical Appliances (Medical)",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "653",
+        "name": "厨房电器",
+        "name_en": "Kitchen Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1047393",
+        "name": "大家电",
+        "name_en": "Major Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201571222",
+        "name": "母婴电器",
+        "name_en": "Maternal and Infant Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123610009",
+        "name": "个护电器",
+        "name_en": "Personal Care Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1047981",
+        "name": "两季电器",
+        "name_en": "Seasonal Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "652",
+        "name": "生活电器",
+        "name_en": "Small Appliances",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125012004",
+        "name": "智能家居系统",
+        "name_en": "Smart Home System",
+        "level": 1,
+        "has_children": false
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "name": "家装建材",
+    "name_en": "Home Improvement & Building Materials",
+    "subcategories": [
+      {
+        "id": "1038128",
+        "name": "背景墙",
+        "name_en": "Background Wall / Accent Wall",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122384004",
+        "name": "卫浴洁具",
+        "name_en": "Bathroom Sanitary Ware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122930001",
+        "name": "卧室家具",
+        "name_en": "Bedroom Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1314",
+        "name": "吊顶材料",
+        "name_en": "Ceiling Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10405",
+        "name": "瓷砖",
+        "name_en": "Ceramic Tiles",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122794001",
+        "name": "儿童家具",
+        "name_en": "Children's Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045579",
+        "name": "商业、办公家具",
+        "name_en": "Commercial & Office Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1348",
+        "name": "建筑用粘合剂",
+        "name_en": "Construction Adhesives",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "290313",
+        "name": "建筑项目合作",
+        "name_en": "Construction Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "122380009",
+        "name": "定制家具",
+        "name_en": "Custom Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201135601",
+        "name": "装修及工程",
+        "name_en": "Decoration & Engineering",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1349",
+        "name": "装饰线板",
+        "name_en": "Decorative Mouldings & Panels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123610020",
+        "name": "餐厅家具",
+        "name_en": "Dining Room Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10440",
+        "name": "门、窗",
+        "name_en": "Doors & Windows",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032415",
+        "name": "门窗五金",
+        "name_en": "Door & Window Hardware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10428",
+        "name": "地板",
+        "name_en": "Flooring",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1038387",
+        "name": "功能材料",
+        "name_en": "Functional Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1346",
+        "name": "家具五金、配件",
+        "name_en": "Furniture Hardware & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201345303",
+        "name": "成套家具",
+        "name_en": "Furniture Sets",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122374009",
+        "name": "厨卫五金",
+        "name_en": "Kitchen & Bathroom Hardware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1351",
+        "name": "梯类",
+        "name_en": "Ladders & Stairs",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1046737",
+        "name": "景观工程",
+        "name_en": "Landscape Engineering",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122796003",
+        "name": "休闲、户外家具",
+        "name_en": "Leisure & Outdoor Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1043661",
+        "name": "客厅家具",
+        "name_en": "Living Room Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "3010",
+        "name": "锁具",
+        "name_en": "Locks",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "31",
+        "name": "其他家装建材",
+        "name_en": "Other Home Improvement & Building Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1038132",
+        "name": "其他类型家具",
+        "name_en": "Other Types of Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10438",
+        "name": "管件",
+        "name_en": "Pipe Fittings",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1350",
+        "name": "管道系统",
+        "name_en": "Piping Systems",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1032416",
+        "name": "水暖五金",
+        "name_en": "Plumbing Hardware",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1037965",
+        "name": "顶篷材料",
+        "name_en": "Roofing Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122512002",
+        "name": "简易家具",
+        "name_en": "Simple Furniture / Knockdown Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10375",
+        "name": "石材石料",
+        "name_en": "Stone Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123608022",
+        "name": "书房家具",
+        "name_en": "Study Room Furniture",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10422",
+        "name": "木质材料",
+        "name_en": "Wood Materials",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "96",
+    "name": "家纺家饰",
+    "name_en": "Home Textiles & Decor",
+    "subcategories": [
+      {
+        "id": "121188018",
+        "name": "婴童家纺",
+        "name_en": "Baby & Kids Home Textiles",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127874019",
+        "name": "浴巾、浴袍、浴裙、沙滩巾",
+        "name_en": "Bath Towels, Bathrobes, Bath Skirts, Beach Towels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127142003",
+        "name": "床上用品加工定制",
+        "name_en": "Bedding Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10132",
+        "name": "套件类",
+        "name_en": "Bedding Sets",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127870016",
+        "name": "毯类",
+        "name_en": "Blankets & Throws",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127900016",
+        "name": "地毯地垫",
+        "name_en": "Carpets & Mats",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124282001",
+        "name": "钟",
+        "name_en": "Clocks",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127888009",
+        "name": "创意摆件",
+        "name_en": "Creative Ornaments",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127864016",
+        "name": "创意类毛巾",
+        "name_en": "Creative Towels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127186001",
+        "name": "窗帘加工定制",
+        "name_en": "Curtain Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "124264009",
+        "name": "窗帘门帘及配件",
+        "name_en": "Curtains, Door Curtains & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1906",
+        "name": "装饰框架",
+        "name_en": "Decorative Frames",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127926016",
+        "name": "装饰画、挂画",
+        "name_en": "Decorative Paintings, Wall Art",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201148907",
+        "name": "一次性巾类",
+        "name_en": "Disposable Towels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123084001",
+        "name": "被芯类",
+        "name_en": "Duvets & Comforters",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127900015",
+        "name": "功能毛巾",
+        "name_en": "Functional Towels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127894012",
+        "name": "居家布艺",
+        "name_en": "Home Fabric Arts",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127146002",
+        "name": "家居软饰加工定制",
+        "name_en": "Home Soft Furnishings Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "121186015",
+        "name": "酒店布草",
+        "name_en": "Hotel Linens",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "290315",
+        "name": "家居用品项目合作",
+        "name_en": "Household Goods Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "123088001",
+        "name": "床垫床褥",
+        "name_en": "Mattresses & Toppers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122254002",
+        "name": "中巾",
+        "name_en": "Medium Towel",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10138",
+        "name": "其他床上用品",
+        "name_en": "Other Bedding Products",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "123086001",
+        "name": "枕芯类",
+        "name_en": "Pillows",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1704",
+        "name": "贴饰",
+        "name_en": "Stickers & Decals",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123084002",
+        "name": "夏凉品类",
+        "name_en": "Summer Bedding",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127160002",
+        "name": "毛巾、巾类加工定制",
+        "name_en": "Towel Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "127926017",
+        "name": "毛巾、面巾",
+        "name_en": "Towels, Face Towels",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1043469",
+        "name": "壁饰",
+        "name_en": "Wall Decorations",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121192034",
+        "name": "婚庆家纺",
+        "name_en": "Wedding Home Textiles",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "15",
+    "name": "居家日用品",
+    "name_en": "Household Daily Necessities",
+    "subcategories": [
+      {
+        "id": "201664803",
+        "name": "保暖贴/怀炉/保暖用品",
+        "name_en": "Heat Patches / Hand Warmers / Warming Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045268",
+        "name": "酒店用品",
+        "name_en": "Hotel Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1556",
+        "name": "居家日用",
+        "name_en": "Household Daily Necessities",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124272009",
+        "name": "打火机及烟具",
+        "name_en": "Lighters & Smoking Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124284003",
+        "name": "秤",
+        "name_en": "Scales",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045059",
+        "name": "USB新奇特",
+        "name_en": "USB Novelty Items",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124016003",
+        "name": "挡风、遮阳、防雨工具",
+        "name_en": "Wind, Sun & Rain Protection Tools",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "58",
+    "name": "灯饰照明",
+    "name_en": "Lighting Fixtures",
+    "subcategories": [
+      {
+        "id": "1035087",
+        "name": "冷光源",
+        "name_en": "Cold Light Sources",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201270263",
+        "name": "商业照明",
+        "name_en": "Commercial Lighting",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1330",
+        "name": "台灯夜灯",
+        "name_en": "Desk Lamps & Night Lights",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1035250",
+        "name": "电光源材料",
+        "name_en": "Electric Light Source Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124268005",
+        "name": "照明电筒",
+        "name_en": "Flashlights",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "527",
+        "name": "气体放电灯",
+        "name_en": "Gas Discharge Lamps",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10219",
+        "name": "白炽灯",
+        "name_en": "Incandescent Lamps",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121192010",
+        "name": "独立光源",
+        "name_en": "Independent Light Sources / Bulbs",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1034967",
+        "name": "指示灯具",
+        "name_en": "Indicator Lights",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10220",
+        "name": "灯具灯饰",
+        "name_en": "Lamps & Lanterns",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123618004",
+        "name": "LED广告标识",
+        "name_en": "LED Advertising Signs",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123608008",
+        "name": "LED背光源",
+        "name_en": "LED Backlight",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123612008",
+        "name": "LED显示屏",
+        "name_en": "LED Display Screen",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123616010",
+        "name": "LED驱动与控制",
+        "name_en": "LED Driver & Control",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123616005",
+        "name": "LED外延及芯片",
+        "name_en": "LED Epitaxy & Chip",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123616020",
+        "name": "LED照明模组",
+        "name_en": "LED Lighting Modules",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123610013",
+        "name": "LED封装器件",
+        "name_en": "LED Packaged Devices",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123620013",
+        "name": "LED生产及检测设备",
+        "name_en": "LED Production & Testing Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123620004",
+        "name": "LED原料与辅料",
+        "name_en": "LED Raw Materials & Auxiliary Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201303723",
+        "name": "LED灯串",
+        "name_en": "LED String Lights",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123616014",
+        "name": "LED配套服务",
+        "name_en": "LED Supporting Services",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1034981",
+        "name": "照明器材项目合作",
+        "name_en": "Lighting Equipment Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10227",
+        "name": "灯具配附件",
+        "name_en": "Lighting Fixtures & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "123612012",
+        "name": "OLED",
+        "name_en": "OLED",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122250002",
+        "name": "其他LED",
+        "name_en": "Other LED Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1034962",
+        "name": "其他照明工业",
+        "name_en": "Other Lighting Industry",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10217",
+        "name": "室外照明灯具",
+        "name_en": "Outdoor Lighting Fixtures",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1034964",
+        "name": "专门用途灯具",
+        "name_en": "Special Purpose Lighting Fixtures",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1034980",
+        "name": "库存照明器材",
+        "name_en": "Stock Lighting Equipment",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201903201",
+        "name": "无主灯照明",
+        "name_en": "Track Lighting / Recessed Lighting",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "130822220",
+    "name": "个护/家清",
+    "name_en": "Personal Care/Home Cleaning",
+    "subcategories": [
+      {
+        "id": "126182004",
+        "name": "身体护理",
+        "name_en": "Body Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1043058",
+        "name": "身体清洁",
+        "name_en": "Body Cleansing",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122194007",
+        "name": "除臭芳香用品",
+        "name_en": "Deodorizing & Fragrance Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201303409",
+        "name": "消毒抑菌用品",
+        "name_en": "Disinfection & Antibacterial Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201231505",
+        "name": "女性护理",
+        "name_en": "Feminine Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122278002",
+        "name": "地板清洁护理",
+        "name_en": "Floor Cleaning & Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10313",
+        "name": "美发产品",
+        "name_en": "Hair Care Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122262003",
+        "name": "家居清洁护理",
+        "name_en": "Home Cleaning & Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122212003",
+        "name": "厨卫清洁剂",
+        "name_en": "Kitchen & Bathroom Cleaners",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122196011",
+        "name": "衣物清洁护理",
+        "name_en": "Laundry Cleaning & Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201358608",
+        "name": "男性护理",
+        "name_en": "Men's Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122268004",
+        "name": "口腔清洁护理",
+        "name_en": "Oral Cleaning & Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1513",
+        "name": "纸品湿巾",
+        "name_en": "Paper Products & Wipes",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201304234",
+        "name": "个护家清加工",
+        "name_en": "Personal Care & Home Cleaning Processing",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201548001",
+        "name": "驱虫防蚊灭鼠杀虫用品",
+        "name_en": "Pest Control Products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122338008",
+        "name": "假发",
+        "name_en": "Wigs",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "122916001",
+    "name": "宠物及园艺",
+    "name_en": "Pets & Gardening",
+    "subcategories": [
+      {
+        "id": "121786003",
+        "name": "水族世界",
+        "name_en": "Aquarium World/Aquatics",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121850001",
+        "name": "猫/狗美容清洁用品",
+        "name_en": "Cat/Dog Grooming & Cleaning Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202055518",
+        "name": "猫/狗主粮",
+        "name_en": "Cat/Dog Main Food",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121828001",
+        "name": "猫狗用品",
+        "name_en": "Cat & Dog Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "202055517",
+        "name": "猫/狗零食",
+        "name_en": "Cat/Dog Treats",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125496001",
+        "name": "花盆、花瓶",
+        "name_en": "Flower Pots, Vases",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125492002",
+        "name": "花卉",
+        "name_en": "Flowers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045486",
+        "name": "林业及园林业副产品",
+        "name_en": "Forestry & Gardening By-products",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125",
+        "name": "园林资材",
+        "name_en": "Gardening Supplies/Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124",
+        "name": "园林植物",
+        "name_en": "Garden Plants",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121792003",
+        "name": "宠物活体",
+        "name_en": "Live Pets",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121776006",
+        "name": "其他宠物用品",
+        "name_en": "Other Pet Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201305503",
+        "name": "宠物服饰、配饰",
+        "name_en": "Pet Apparel & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125278008",
+        "name": "宠物保健品",
+        "name_en": "Pet Health Supplements",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125270017",
+        "name": "宠物医药",
+        "name_en": "Pet Medicine/Pharmacy",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125492001",
+        "name": "盆栽、盆景",
+        "name_en": "Potted Plants, Bonsai",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "125484002",
+        "name": "种子、种苗及种球",
+        "name_en": "Seeds, Seedlings & Bulbs",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121814002",
+        "name": "小宠及用品",
+        "name_en": "Small Pets & Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201232602",
+        "name": "宠物智能设备",
+        "name_en": "Smart Pet Devices",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "18",
+    "name": "运动户外",
+    "name_en": "Sports & Outdoors",
+    "subcategories": [
+      {
+        "id": "1811",
+        "name": "游艺设施",
+        "name_en": "Amusement Facilities",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044819",
+        "name": "羽毛球、网球用品",
+        "name_en": "Badminton & Tennis Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044785",
+        "name": "球类配套器材",
+        "name_en": "Ball Sports Equipment",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044823",
+        "name": "棒垒球、曲棍球用品",
+        "name_en": "Baseball, Softball & Hockey Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044810",
+        "name": "篮球用品",
+        "name_en": "Basketball Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044642",
+        "name": "台球用品",
+        "name_en": "Billiard Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044730",
+        "name": "保龄球用品",
+        "name_en": "Bowling Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201883906",
+        "name": "拳击、搏击运动",
+        "name_en": "Boxing & Combat Sports",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1809",
+        "name": "棋牌、休闲运动",
+        "name_en": "Chess, Cards & Leisure Sports",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201564618",
+        "name": "骑行整车",
+        "name_en": "Complete Bicycles",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201564924",
+        "name": "骑行服配",
+        "name_en": "Cycling Apparel & Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122098001",
+        "name": "骑行零件",
+        "name_en": "Cycling Parts",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045017",
+        "name": "舞蹈、戏剧用品",
+        "name_en": "Dance & Drama Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1033450",
+        "name": "娱乐休闲产品代理加盟",
+        "name_en": "Entertainment & Leisure Products Agency/Franchise",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1818",
+        "name": "马术用品",
+        "name_en": "Equestrian Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "74",
+        "name": "极限运动用品",
+        "name_en": "Extreme Sports Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "2027",
+        "name": "击剑、武术用品",
+        "name_en": "Fencing & Martial Arts Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1044658",
+        "name": "垂钓用品",
+        "name_en": "Fishing Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "2009",
+        "name": "健身器材用品",
+        "name_en": "Fitness Equipment & Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122226003",
+        "name": "足球用品",
+        "name_en": "Football / Soccer Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "2005",
+        "name": "高尔夫用品",
+        "name_en": "Golf Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1820",
+        "name": "体操用品",
+        "name_en": "Gymnastics Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1044794",
+        "name": "冰鞋、轮滑、滑板",
+        "name_en": "Ice Skates, Roller Skates & Skateboards",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1608",
+        "name": "按摩保健",
+        "name_en": "Massage & Health Care",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "281904",
+        "name": "山地、野营用品",
+        "name_en": "Mountaineering & Camping Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "2053",
+        "name": "登山、攀岩、攀冰用品",
+        "name_en": "Mountaineering, Rock Climbing & Ice Climbing Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1044786",
+        "name": "其他球类用品",
+        "name_en": "Other Ball Sports Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1814",
+        "name": "其他运动休闲用品",
+        "name_en": "Other Sports & Leisure Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1048070",
+        "name": "户外服装",
+        "name_en": "Outdoor Clothing",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122648001",
+        "name": "户外眼镜",
+        "name_en": "Outdoor Eyewear",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121900002",
+        "name": "户外鞋",
+        "name_en": "Outdoor Shoes",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044780",
+        "name": "裁判、计时、计步用具",
+        "name_en": "Refereeing, Timing & Pedometer Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044824",
+        "name": "橄榄球、壁球、手球",
+        "name_en": "Rugby, Squash & Handball",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1821",
+        "name": "射击、射箭用品",
+        "name_en": "Shooting & Archery Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "2013",
+        "name": "滑雪用品",
+        "name_en": "Skiing Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127394011",
+        "name": "运动装备加工定制",
+        "name_en": "Sports Equipment Processing & Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1048021",
+        "name": "运动、武术、球服",
+        "name_en": "Sports, Martial Arts & Ball Game Uniforms",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121898001",
+        "name": "运动户外辅助用品",
+        "name_en": "Sports & Outdoor Auxiliary Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1031803",
+        "name": "体育运动产品代理加盟",
+        "name_en": "Sports Products Agency/Franchise",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10539",
+        "name": "体育运动项目合作",
+        "name_en": "Sports Project Cooperation",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "2040",
+        "name": "运动护具",
+        "name_en": "Sports Protective Gear",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "121876002",
+        "name": "运动鞋",
+        "name_en": "Sports Shoes",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1048069",
+        "name": "运动休闲服装",
+        "name_en": "Sportswear & Casual Wear",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "126508002",
+        "name": "运动服饰加工定制",
+        "name_en": "Sportswear Processing & Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1033452",
+        "name": "库存娱乐休闲产品",
+        "name_en": "Stock Entertainment & Leisure Products",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "10538",
+        "name": "库存体育运动产品",
+        "name_en": "Stock Sports Products",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1048023",
+        "name": "游泳用品",
+        "name_en": "Swimming Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044825",
+        "name": "乒乓球用品",
+        "name_en": "Table Tennis Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1828",
+        "name": "田径用品",
+        "name_en": "Track & Field Supplies",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1044639",
+        "name": "场地铺设器材",
+        "name_en": "Venue Paving Materials",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122248001",
+        "name": "排球用品",
+        "name_en": "Volleyball Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044740",
+        "name": "涉水运动用品",
+        "name_en": "Water Sports Supplies",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127890013",
+        "name": "瑜伽/健身服",
+        "name_en": "Yoga / Fitness Wear",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1044713",
+        "name": "瑜伽用品",
+        "name_en": "Yoga Supplies",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "201547901",
+    "name": "收纳清洁用具",
+    "name_en": "Storage & Cleaning Utensils",
+    "subcategories": [
+      {
+        "id": "1043151",
+        "name": "卫浴整理用具",
+        "name_en": "Bathroom Organization Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1514",
+        "name": "家务清洁用具",
+        "name_en": "Housekeeping & Cleaning Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "10295",
+        "name": "厨房整理",
+        "name_en": "Kitchen Organization",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122374002",
+        "name": "衣物晾晒洗护用具",
+        "name_en": "Laundry Drying & Care Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122390004",
+        "name": "整理用具",
+        "name_en": "Organization Tools",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1548",
+        "name": "收纳防尘",
+        "name_en": "Storage & Dust Prevention",
+        "level": 1,
+        "has_children": true
+      }
+    ]
+  },
+  {
+    "id": "1813",
+    "name": "玩具",
+    "name_en": "Toys",
+    "subcategories": [
+      {
+        "id": "122984013",
+        "name": "婴儿玩具",
+        "name_en": "Baby Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "127002083",
+        "name": "积木拼插类玩具",
+        "name_en": "Building Blocks & Construction Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201565322",
+        "name": "儿童音乐玩具",
+        "name_en": "Children's Musical Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "201160102",
+        "name": "娃娃及娃娃配件",
+        "name_en": "Dolls & Doll Accessories",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "181309",
+        "name": "益智、科教玩具",
+        "name_en": "Educational & Science Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122962001",
+        "name": "电动/遥控玩具",
+        "name_en": "Electric/Remote Control Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124022002",
+        "name": "电子/发光玩具",
+        "name_en": "Electronic/Light-Up Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122988002",
+        "name": "公仔、玩偶、娃娃",
+        "name_en": "Figures, Dolls, Plush Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1048131",
+        "name": "充气玩具",
+        "name_en": "Inflatable Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "124736019",
+        "name": "正版动漫形象",
+        "name_en": "Licensed Anime Characters",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "181302",
+        "name": "模型玩具",
+        "name_en": "Model Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122990003",
+        "name": "新奇特玩具",
+        "name_en": "Novelty Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045593",
+        "name": "其他类玩具",
+        "name_en": "Other Toys",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "201161304",
+        "name": "毛绒/布艺公仔玩具",
+        "name_en": "Plush/Fabric Doll Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "122962011",
+        "name": "过家家玩具",
+        "name_en": "Pretend Play Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1045520",
+        "name": "运动、休闲、传统玩具",
+        "name_en": "Sports, Leisure, Traditional Toys",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "181312",
+        "name": "库存玩具",
+        "name_en": "Stock Toys",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "122962004",
+        "name": "童车、背带",
+        "name_en": "Strollers, Carriers",
+        "level": 1,
+        "has_children": true
+      },
+      {
+        "id": "1043076",
+        "name": "玩具配件",
+        "name_en": "Toy Accessories",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1031795",
+        "name": "玩具代理加盟",
+        "name_en": "Toy Agency/Franchise",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "126482002",
+        "name": "玩具加工定制",
+        "name_en": "Toy Processing/Customization",
+        "level": 1,
+        "has_children": false
+      },
+      {
+        "id": "1031836",
+        "name": "玩具项目合作",
+        "name_en": "Toy Project Cooperation",
+        "level": 1,
+        "has_children": false
+      }
+    ]
+  }
+]
