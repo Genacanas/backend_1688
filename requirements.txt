@@ -1,5 +1,6 @@
 fastapi
 uvicorn
 requests
-python-dotenv
-supabase
+python-dotenv==1.0.0
+supabase==2.3.0
+python-multipart==0.0.6
