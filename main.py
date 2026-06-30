@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from fastapi import FastAPI, HTTPException, Form
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -81,6 +82,29 @@ def get_products(cat_id: str, page: int = 1, page_size: int = 20):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error leyendo de Supabase: {str(e)}")
+
+class ShopStatusUpdate(BaseModel):
+    status: str
+
+@app.get("/api/shops")
+def get_shops(status: str = "pending"):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('shops').select('*').eq('status', status).order('created_at', desc=True).execute()
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/shops/{company_name}/status")
+def update_shop_status(company_name: str, update: ShopStatusUpdate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('shops').update({"status": update.status}).eq('company_name', company_name).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

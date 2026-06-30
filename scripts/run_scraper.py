@@ -77,8 +77,22 @@ def run_scraper():
             
             # Preparar e insertar en Supabase
             insert_data = []
+            shops_data = {}
             for item in items:
                 sold_count = item.get("sale_info", {}).get("sale_quantity_90days", "")
+                
+                # Extraer info de la tienda
+                shop_info = item.get("shop_info", {})
+                company_name = shop_info.get("company_name")
+                if company_name and company_name not in shops_data:
+                    score = shop_info.get("score_info", {}).get("composite_score", "")
+                    shops_data[company_name] = {
+                        "company_name": company_name,
+                        "shop_years": int(shop_info.get("shop_years") or 0),
+                        "composite_score": str(score),
+                        "status": "pending"
+                    }
+                
                 insert_data.append({
                     "item_id": str(item.get("item_id")),
                     "category_id": cat_id,
@@ -90,6 +104,13 @@ def run_scraper():
                     "currency": item.get("currency"),
                     "sold_count": sold_count
                 })
+            
+            # Guardar tiendas
+            if shops_data:
+                try:
+                    supabase.table('shops').upsert(list(shops_data.values()), on_conflict='company_name', ignore_duplicates=True).execute()
+                except Exception as e:
+                    print(f"  -> Error insertando tiendas: {e}")
             
             # Guardar en base de datos
             try:
