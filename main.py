@@ -123,34 +123,7 @@ def get_shop_products(member_id: str, page_size: int = 20):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-import httpx
-from fastapi.responses import RedirectResponse
 
-@app.get("/api/shops/redirect/{member_id}")
-async def redirect_to_desktop_shop(member_id: str):
-    """
-    Resuelve la URL móvil a la URL de escritorio real (ej: bestcar.1688.com) 
-    y redirige al usuario a la página de ofertas.
-    """
-    url = f"https://winport.m.1688.com/page/index.html?memberId={member_id}"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    
-    try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=8.0) as client:
-            res = await client.get(url, headers=headers)
-            final_url = str(res.url).rstrip("/")
-            
-            # Si redirigió a un dominio limpio de escritorio
-            if "m.1688.com" not in final_url and "winport.1688.com" not in final_url:
-                if final_url.endswith("/page/index.html"):
-                    final_url = final_url.replace("/page/index.html", "")
-                return RedirectResponse(f"{final_url}/page/offerlist.htm")
-                
-    except Exception as e:
-        print(f"Error resolviendo redirección para {member_id}: {e}")
-        
-    # Fallback a la móvil
-    return RedirectResponse(url.replace("index.html", "offerlist.htm"))
 
 if __name__ == "__main__":
     import uvicorn
