@@ -48,7 +48,8 @@ def run_scraper():
             "language": "en",
             "cat_id": cat_id,
             "page": 1,
-            "page_size": 50,  # Solicitamos 50 productos como pidió el usuario
+            "page_size": 50,
+            "new_arrival": "true",
             "sort": "default"
         }
         
@@ -77,6 +78,7 @@ def run_scraper():
             # Preparar e insertar en Supabase
             insert_data = []
             for item in items:
+                sold_count = item.get("sale_info", {}).get("sale_quantity_90days", "")
                 insert_data.append({
                     "item_id": str(item.get("item_id")),
                     "category_id": cat_id,
@@ -85,7 +87,8 @@ def run_scraper():
                     "moq": float(item.get("moq") or 1),
                     "image_url": item.get("img"),
                     "product_url": item.get("product_url"),
-                    "currency": item.get("currency")
+                    "currency": item.get("currency"),
+                    "sold_count": sold_count
                 })
             
             # Guardar en base de datos

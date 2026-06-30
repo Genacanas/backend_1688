@@ -64,7 +64,6 @@ def get_products(cat_id: str, page: int = 1, page_size: int = 20):
         response = supabase.table('products').select('*').eq('category_id', cat_id).limit(page_size).execute()
         
         # Mapear los campos de la DB al formato que espera el frontend
-        # El frontend espera: item_id, title, price, moq, img (en la db es image_url), product_url, currency
         items = []
         for row in response.data:
             items.append({
@@ -74,7 +73,8 @@ def get_products(cat_id: str, page: int = 1, page_size: int = 20):
                 "moq": row.get("moq"),
                 "img": row.get("image_url"),
                 "product_url": row.get("product_url"),
-                "currency": row.get("currency")
+                "currency": row.get("currency"),
+                "sold_count": row.get("sold_count")
             })
             
         return {"data": {"items": items}}
