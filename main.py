@@ -107,22 +107,22 @@ def update_shop_status(company_name: str, update: ShopStatusUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/shops/{member_id}/products")
-def get_shop_products(member_id: str, page: int = 1, page_size: int = 5):
-    if not TMAPI_TOKEN:
-        raise HTTPException(status_code=500, detail="TMAPI token no configurado")
+def get_shop_products(member_id: str, page_size: int = 20):
     try:
-        res = requests.get("http://api.tmapi.top/1688/shop/items", params={
-            "apiToken": TMAPI_TOKEN,
-            "member_id": member_id,
-            "page": page,
-            "page_size": page_size,
-            "language": "en",
-            "sort": "sales"
-        })
-        data = res.json()
-        return {"data": data.get("data", {})}
+        # Look up company_name from the shops table using member_id
+        shop_res = supabase.table('shops').select('company_name').eq('member_id', member_id).limit(1).execute()
+        if not shop_res.data:
+            raise HTTPException(status_code=404, detail="Shop not found")
+        company_name = shop_res.data[0]['company_name']
+
+        # Fetch products from DB by company_name
+        products_res = supabase.table('products').select('*').eq('company_name', company_name).limit(page_size).execute()
+        return {"data": {"items": products_res.data, "company_name": company_name}}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 if __name__ == "__main__":
