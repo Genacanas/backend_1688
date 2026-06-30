@@ -106,6 +106,25 @@ def update_shop_status(company_name: str, update: ShopStatusUpdate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/shops/{member_id}/products")
+def get_shop_products(member_id: str, page: int = 1, page_size: int = 5):
+    if not TMAPI_TOKEN:
+        raise HTTPException(status_code=500, detail="TMAPI token no configurado")
+    try:
+        res = requests.get("http://api.tmapi.top/1688/shop/items", params={
+            "apiToken": TMAPI_TOKEN,
+            "member_id": member_id,
+            "page": page,
+            "page_size": page_size,
+            "language": "en",
+            "sort": "sales"
+        })
+        data = res.json()
+        return {"data": data.get("data", {})}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

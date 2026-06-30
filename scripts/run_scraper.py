@@ -105,9 +105,28 @@ def run_scraper():
                     "sold_count": sold_count
                 })
             
-            # Guardar tiendas
+            # Guardar tiendas (solo las que no tenemos ya en BD)
             if shops_data:
                 try:
+                    # Verificar cuales tiendas son nuevas (no tienen member_id aun)
+                    existing = supabase.table('shops').select('company_name').in_('company_name', list(shops_data.keys())).not_.is_('member_id', 'null').execute()
+                    existing_names = {r['company_name'] for r in existing.data}
+                    
+                    for company_name, shop_row in shops_data.items():
+                        if company_name not in existing_names:
+                            # Buscar un item_id de esta tienda para obtener member_id
+                            item_id = next((item.get('item_id') for item in items if item.get('shop_info', {}).get('company_name') == company_name), None)
+                            if item_id:
+                                try:
+                                    det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={'apiToken': TMAPI_TOKEN, 'item_id': str(item_id), 'language': 'en'})
+                                    det_data = det_res.json()
+                                    shop_info_detail = det_data.get('data', {}).get('shop_info', {})
+                                    shop_row['member_id'] = shop_info_detail.get('seller_member_id', '')
+                                    shop_row['shop_url'] = shop_info_detail.get('shop_url', '')
+                                    time.sleep(0.5)
+                                except Exception as e:
+                                    print(f"  -> Error obteniendo member_id para {company_name}: {e}")
+                        
                     supabase.table('shops').upsert(list(shops_data.values()), on_conflict='company_name', ignore_duplicates=True).execute()
                 except Exception as e:
                     print(f"  -> Error insertando tiendas: {e}")
