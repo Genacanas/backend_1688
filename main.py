@@ -87,12 +87,18 @@ class ShopStatusUpdate(BaseModel):
     status: str
 
 @app.get("/api/shops")
-def get_shops(status: str = "pending"):
+def get_shops(status: str = "pending", page: int = 1, limit: int = 50):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        response = supabase.table('shops').select('*').eq('status', status).order('created_at', desc=True).execute()
-        return response.data
+        offset = (page - 1) * limit
+        response = supabase.table('shops').select('*', count='exact').eq('status', status).order('created_at', desc=True).range(offset, offset + limit - 1).execute()
+        return {
+            "data": response.data,
+            "total": response.count,
+            "page": page,
+            "limit": limit
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
