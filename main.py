@@ -46,7 +46,7 @@ def get_status():
     return {"status": "ok", "message": "Backend is running connected to Supabase!"}
 
 @app.get("/api/products/new-discoveries")
-def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str] = None, limit: int = 500):
+def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str] = None, page: int = 1, limit: int = 100):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
@@ -65,18 +65,45 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if not end_date:
             end_date = datetime.now(timezone.utc).isoformat()
 
-        # Build query
-        query = supabase.table('products').select('*').gte('discovered_at', start_date)
-        
         # We append a 'Z' or make sure end_date includes the end of the day if it's just YYYY-MM-DD
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        query = query.lte('discovered_at', end_date).order('discovered_at', desc=True).limit(2000)
-        response = query.execute()
+        # Fetch all matching products in chunks to bypass 1000 limit
+        all_products = []
+        offset = 0
+        chunk_size = 1000
+        
+        while True:
+            chunk_query = (
+                supabase.table('products')
+                .select('*')
+                .gte('discovered_at', start_date)
+                .lte('discovered_at', end_date)
+                .order('discovered_at', desc=True)
+                .range(offset, offset + chunk_size - 1)
+            )
+            chunk_res = chunk_query.execute()
+            data = chunk_res.data
+            all_products.extend(data)
+            if len(data) < chunk_size:
+                break
+            offset += chunk_size
 
-        filtered = [p for p in response.data if p.get('company_name') in tracked_set]
-        return {"data": filtered[:limit], "shops": shops_map}
+        filtered = [p for p in all_products if p.get('company_name') in tracked_set]
+        total = len(filtered)
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_data = filtered[start_idx:end_idx]
+        
+        return {
+            "data": paginated_data, 
+            "total": total, 
+            "shops": shops_map,
+            "page": page,
+            "limit": limit
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

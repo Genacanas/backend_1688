@@ -18,7 +18,7 @@ res = (
     .neq('member_id', '')
     .execute()
 )
-cutoff_date = datetime.now(timezone.utc) - timedelta(days=5)
+cutoff_date = datetime.now(timezone.utc) - timedelta(days=1)
 
 # Filter in python to avoid .or_ missing attribute in older supabase-py versions
 shops = []
@@ -34,15 +34,13 @@ for s in res.data:
     except:
         shops.append(s)
 
-# Limit to 50
-shops = shops[:50]
-
 if not shops:
     print("No valid shops need checking at this time.")
     sys.exit(0)
 
 shops_with_new_products = []
 all_new_products = []
+pending_insert = []
 
 for i, shop in enumerate(shops):
     member_id = shop['member_id']
@@ -113,9 +111,28 @@ for i, shop in enumerate(shops):
                     'discovered_at': datetime.now(timezone.utc).isoformat()
                 }
                 all_new_products.append(product_record)
+                pending_insert.append(product_record)
         else:
             print("  -> No new products.")
             
+        if len(pending_insert) >= 50:
+            db_insert_data = []
+            seen_ids = set()
+            for p in pending_insert:
+                item_id = p.get('item_id')
+                if item_id in seen_ids:
+                    continue
+                seen_ids.add(item_id)
+                db_item = dict(p)
+                db_item.pop('shop_url', None)
+                db_insert_data.append(db_item)
+            try:
+                supabase.table('products').upsert(db_insert_data, on_conflict='item_id').execute()
+                print(f"  -> Inserted chunk of {len(db_insert_data)} products to DB.")
+            except Exception as e:
+                print(f"  -> Error inserting chunk: {e}")
+            pending_insert.clear()
+
         # Update last_checked_products_at for this shop so we don't query it again soon
         now_iso = datetime.now(timezone.utc).isoformat()
         try:
@@ -143,21 +160,24 @@ if shops_with_new_products:
         json.dump(all_new_products, f, ensure_ascii=False, indent=2)
     print(f"\nSe han guardado {len(all_new_products)} productos nuevos en {json_path}")
     
-    # Insertar en base de datos
-    try:
-        # Eliminamos shop_url del insert si no existe en la tabla products de supabase (por si acaso, aunque normalmente no está en table schema, pero el user la pidió en JSON).
-        # Vamos a limpiar el dict para insertar solo lo que sabemos que la tabla acepta:
-        db_insert_data = []
-        for p in all_new_products:
-            db_item = dict(p)
-            # Remove shop_url as it's not in our usual 'products' table schema
-            db_item.pop('shop_url', None)
-            db_insert_data.append(db_item)
-            
-        supabase.table('products').upsert(db_insert_data, on_conflict='item_id').execute()
-        print(f"Se han insertado exitosamente {len(db_insert_data)} productos nuevos en la base de datos de Supabase.")
-    except Exception as e:
-        print(f"Error insertando en base de datos: {e}")
+    # Insertar remanentes en base de datos
+    if pending_insert:
+        try:
+            db_insert_data = []
+            seen_ids = set()
+            for p in pending_insert:
+                item_id = p.get('item_id')
+                if item_id in seen_ids:
+                    continue
+                seen_ids.add(item_id)
+                db_item = dict(p)
+                db_item.pop('shop_url', None)
+                db_insert_data.append(db_item)
+                
+            supabase.table('products').upsert(db_insert_data, on_conflict='item_id').execute()
+            print(f"Se han insertado exitosamente los últimos {len(db_insert_data)} productos nuevos en la base de datos de Supabase.")
+        except Exception as e:
+            print(f"Error insertando remanentes en base de datos: {e}")
         
 else:
     print("None of the 100 shops had any new products.")
