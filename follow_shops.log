@@ -1,0 +1,4 @@
+2026-07-02 08:32:16,847 [INFO] Obteniendo tiendas pendientes...
+2026-07-02 08:32:17,892 [INFO] HTTP Request: GET https://pxocbrhjycclrqklbvrl.supabase.co/rest/v1/shops?select=company_name%2Cshop_url%2Cmember_id&shop_url=not.is.null&shop_url=neq.&is_followed=neq.True&limit=100 "HTTP/2 200 OK"
+2026-07-02 08:32:17,895 [INFO] Se intentará seguir 100 tiendas.
+2026-07-02 08:32:17,895 [INFO] 36 cookies cargadas desde scripts/cookies.json

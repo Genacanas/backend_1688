@@ -135,7 +135,13 @@ def run_scraper():
                                     except Exception as e:
                                         print(f"  -> Error obteniendo member_id para {company_name}: {e}")
                             
-                        supabase.table('shops').upsert(list(shops_data.values()), on_conflict='company_name', ignore_duplicates=True).execute()
+                        # Filtrar tiendas para insertar SOLO si tienen member_id válido
+                        valid_shops = [row for row in shops_data.values() if row.get('member_id')]
+                        
+                        if valid_shops:
+                            supabase.table('shops').upsert(valid_shops, on_conflict='company_name', ignore_duplicates=True).execute()
+                        else:
+                            print("  -> No hay tiendas válidas con member_id para insertar.")
                     except Exception as e:
                         print(f"  -> Error insertando tiendas: {e}")
                 

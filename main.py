@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Form
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +43,18 @@ def login(username: str = Form(...), password: str = Form(...)):
 @app.get("/api/status")
 def get_status():
     return {"status": "ok", "message": "Backend is running connected to Supabase!"}
+
+@app.get("/api/products/new-discoveries")
+def get_new_discoveries(days_ago: int = 3, limit: int = 500):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
+        cutoff_iso = cutoff_date.isoformat()
+        response = supabase.table('products').select('*').gte('discovered_at', cutoff_iso).order('discovered_at', desc=True).limit(limit).execute()
+        return {"data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/whitelist")
 def get_whitelist():
@@ -92,7 +105,9 @@ def get_shops(status: str = "pending", page: int = 1, limit: int = 50):
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
         offset = (page - 1) * limit
-        response = supabase.table('shops').select('*', count='exact').eq('status', status).order('created_at', desc=True).range(offset, offset + limit - 1).execute()
+        # Filtrar tiendas que tienen member_id válido (ni null ni vacío)
+        query = supabase.table('shops').select('*', count='exact').eq('status', status).not_.is_('member_id', 'null').neq('member_id', '').order('created_at', desc=True).range(offset, offset + limit - 1)
+        response = query.execute()
         return {
             "data": response.data,
             "total": response.count,
