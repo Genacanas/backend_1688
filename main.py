@@ -49,18 +49,19 @@ def get_new_discoveries(days_ago: int = 3, limit: int = 500):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        # Get tracked shop company names as a set for fast lookup
-        tracked_res = supabase.table('shops').select('company_name').eq('status', 'tracking').execute()
+        # Get full details of tracked shops (url, score, age)
+        tracked_res = supabase.table('shops').select('company_name,shop_url,composite_score,store_age').eq('status', 'tracking').execute()
         tracked_set = {s['company_name'] for s in tracked_res.data if s.get('company_name')}
+        # Build a lookup map: company_name -> shop details
+        shops_map = {s['company_name']: s for s in tracked_res.data if s.get('company_name')}
 
         if not tracked_set:
-            return {"data": []}
+            return {"data": [], "shops": {}}
 
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
         cutoff_iso = cutoff_date.isoformat()
 
         # Fetch recent products without company filter (avoids URL too long)
-        # then filter in Python — date range already limits volume significantly
         response = (
             supabase.table('products')
             .select('*')
@@ -71,7 +72,7 @@ def get_new_discoveries(days_ago: int = 3, limit: int = 500):
         )
 
         filtered = [p for p in response.data if p.get('company_name') in tracked_set]
-        return {"data": filtered[:limit]}
+        return {"data": filtered[:limit], "shops": shops_map}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
