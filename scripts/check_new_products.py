@@ -7,12 +7,38 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 TMAPI_TOKEN = os.getenv('TMAPI_TOKEN')
 supabase = create_client(os.getenv('SUPABASE_URL'), os.getenv('SUPABASE_KEY'))
 
-print("Fetching next 100 tracked shops...")
-res = supabase.table('shops').select('company_name, member_id, shop_url').not_.is_('member_id', 'null').neq('member_id', '').range(100, 199).execute()
-shops = res.data
+from datetime import datetime, timezone, timedelta
+
+print("Fetching all tracked shops to filter by last_checked_products_at...")
+res = (
+    supabase.table('shops')
+    .select('company_name, member_id, shop_url, last_checked_products_at')
+    .eq('status', 'tracking')
+    .not_.is_('member_id', 'null')
+    .neq('member_id', '')
+    .execute()
+)
+cutoff_date = datetime.now(timezone.utc) - timedelta(days=5)
+
+# Filter in python to avoid .or_ missing attribute in older supabase-py versions
+shops = []
+for s in res.data:
+    last_checked_str = s.get('last_checked_products_at')
+    if not last_checked_str:
+        shops.append(s)
+        continue
+    try:
+        last_checked = datetime.fromisoformat(last_checked_str.replace('Z', '+00:00'))
+        if last_checked < cutoff_date:
+            shops.append(s)
+    except:
+        shops.append(s)
+
+# Limit to 50
+shops = shops[:50]
 
 if not shops:
-    print("No valid shops found.")
+    print("No valid shops need checking at this time.")
     sys.exit(0)
 
 shops_with_new_products = []
@@ -90,6 +116,13 @@ for i, shop in enumerate(shops):
         else:
             print("  -> No new products.")
             
+        # Update last_checked_products_at for this shop so we don't query it again soon
+        now_iso = datetime.now(timezone.utc).isoformat()
+        try:
+            supabase.table('shops').update({'last_checked_products_at': now_iso}).eq('company_name', company_name).execute()
+        except Exception as update_err:
+            print(f"  -> Failed to update last_checked_products_at: {update_err}")
+
         time.sleep(1) # rate limit
         
     except Exception as e:

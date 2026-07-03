@@ -4,6 +4,7 @@ import requests
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Form
 from pydantic import BaseModel
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -45,7 +46,7 @@ def get_status():
     return {"status": "ok", "message": "Backend is running connected to Supabase!"}
 
 @app.get("/api/products/new-discoveries")
-def get_new_discoveries(days_ago: int = 3, limit: int = 500):
+def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str] = None, limit: int = 500):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
@@ -58,18 +59,21 @@ def get_new_discoveries(days_ago: int = 3, limit: int = 500):
         if not tracked_set:
             return {"data": [], "shops": {}}
 
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
-        cutoff_iso = cutoff_date.isoformat()
+        # Fallback to last 3 days if not provided
+        if not start_date:
+            start_date = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
+        if not end_date:
+            end_date = datetime.now(timezone.utc).isoformat()
 
-        # Fetch recent products without company filter (avoids URL too long)
-        response = (
-            supabase.table('products')
-            .select('*')
-            .gte('discovered_at', cutoff_iso)
-            .order('discovered_at', desc=True)
-            .limit(2000)
-            .execute()
-        )
+        # Build query
+        query = supabase.table('products').select('*').gte('discovered_at', start_date)
+        
+        # We append a 'Z' or make sure end_date includes the end of the day if it's just YYYY-MM-DD
+        if len(end_date) == 10:  # YYYY-MM-DD
+            end_date += "T23:59:59.999Z"
+
+        query = query.lte('discovered_at', end_date).order('discovered_at', desc=True).limit(2000)
+        response = query.execute()
 
         filtered = [p for p in response.data if p.get('company_name') in tracked_set]
         return {"data": filtered[:limit], "shops": shops_map}
