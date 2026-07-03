@@ -49,9 +49,25 @@ def get_new_discoveries(days_ago: int = 3, limit: int = 500):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
+        # Get all tracked shop company names
+        tracked_res = supabase.table('shops').select('company_name').eq('status', 'tracking').execute()
+        tracked_names = [s['company_name'] for s in tracked_res.data if s.get('company_name')]
+        
+        if not tracked_names:
+            return {"data": []}
+        
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
         cutoff_iso = cutoff_date.isoformat()
-        response = supabase.table('products').select('*').gte('discovered_at', cutoff_iso).order('discovered_at', desc=True).limit(limit).execute()
+        
+        response = (
+            supabase.table('products')
+            .select('*')
+            .gte('discovered_at', cutoff_iso)
+            .in_('company_name', tracked_names)
+            .order('discovered_at', desc=True)
+            .limit(limit)
+            .execute()
+        )
         return {"data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
