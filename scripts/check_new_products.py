@@ -9,6 +9,26 @@ supabase = create_client(os.getenv('SUPABASE_URL'), os.getenv('SUPABASE_KEY'))
 
 from datetime import datetime, timezone, timedelta
 
+def fetch_item_detail_english(item_id):
+    url = "https://api.tmapi.top/1688/item_detail"
+    params = {
+        "apiToken": TMAPI_TOKEN,
+        "item_id": str(item_id),
+        "language": "en"
+    }
+    try:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        # Disable SSL verification for TMAPI to avoid cert errors
+        res = requests.get(url, params=params, verify=False, timeout=15)
+        if res.status_code == 200:
+            data = res.json().get('data', {})
+            return data.get('title', ''), data.get('product_props', [])
+    except Exception as e:
+        print(f"  [!] TMAPI detail error for {item_id}: {e}")
+    return "", []
+
 print("Fetching all tracked shops to filter by last_checked_products_at...")
 res = (
     supabase.table('shops')
@@ -97,6 +117,9 @@ for i, shop in enumerate(shops):
                 sale_info = item.get('sale_info', {})
                 qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
                 
+                print(f"    - Fetching details for new product {item_id_prod}...")
+                eng_title, props = fetch_item_detail_english(item_id_prod)
+                
                 product_record = {
                     'item_id': item_id_prod,
                     'title': item.get('title', ''),
@@ -108,7 +131,9 @@ for i, shop in enumerate(shops):
                     'sold_count': str(qty) if qty else '',
                     'company_name': company_name,
                     'shop_url': shop_url,
-                    'discovered_at': datetime.now(timezone.utc).isoformat()
+                    'discovered_at': datetime.now(timezone.utc).isoformat(),
+                    'english_title': eng_title,
+                    'product_props': props
                 }
                 all_new_products.append(product_record)
                 pending_insert.append(product_record)

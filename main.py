@@ -9,10 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
+from openai import OpenAI
+
 load_dotenv()
 TMAPI_TOKEN = os.getenv("TMAPI_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -196,6 +199,93 @@ def get_shop_products(member_id: str, page_size: int = 20):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+@app.post("/api/products/{item_id}/ai-summary")
+def generate_ai_summary(item_id: str):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    
+    # 1. Fetch product from DB
+    res = supabase.table('products').select('item_id, title, english_title, product_props, ai_summary').eq('item_id', item_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = res.data[0]
+    
+    # 2. If ai_summary exists, return it
+    if product.get('ai_summary'):
+        return {"summary": product['ai_summary'], "english_title": product.get('english_title')}
+        
+    eng_title = product.get('english_title') or ""
+    props = product.get('product_props') or []
+    
+    # 3. If no props, fetch from TMAPI (for backward compatibility)
+    if not props:
+        print(f"Fetching details for old product {item_id} from TMAPI...")
+        url = "https://api.tmapi.top/1688/item_detail"
+        params = {
+            "apiToken": TMAPI_TOKEN,
+            "item_id": item_id,
+            "language": "en"
+        }
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            tmapi_res = requests.get(url, params=params, verify=False, timeout=15)
+            if tmapi_res.status_code == 200:
+                data = tmapi_res.json().get('data', {})
+                eng_title = data.get('title', '')
+                props = data.get('product_props', [])
+                
+                # Update DB with fetched TMAPI info
+                supabase.table('products').update({
+                    'english_title': eng_title,
+                    'product_props': props
+                }).eq('item_id', item_id).execute()
+        except Exception as e:
+            print(f"TMAPI error: {e}")
+            
+    if not props and not eng_title:
+        # Fallback to chinese title if TMAPI fails
+        eng_title = product.get('title', '')
+
+    # 4. Generate summary with OpenAI
+    if not OPENAI_API_KEY:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not found")
+        
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    
+    prompt = f"""You are an expert e-commerce product analyst. 
+Based on the following product title and technical properties from a wholesale supplier, write a short, compelling paragraph explaining:
+1. What the product is.
+2. Why it is unique or its main selling points.
+
+Keep it concise (around 3-4 sentences maximum). Make it easy to read for a buyer.
+
+Product Title: {eng_title}
+
+Product Properties:
+{json.dumps(props, indent=2) if props else 'None available'}
+"""
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful e-commerce assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=250
+        )
+        summary = completion.choices[0].message.content.strip()
+        
+        # Save summary
+        supabase.table('products').update({'ai_summary': summary}).eq('item_id', item_id).execute()
+        
+        return {"summary": summary, "english_title": eng_title}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
