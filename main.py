@@ -198,6 +198,24 @@ def get_shop_products(member_id: str, page_size: int = 20):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/shops/name/{company_name}/products")
+def get_shop_products_by_name(company_name: str, page: int = 1, limit: int = 100):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        offset = (page - 1) * limit
+        # Fetch products from DB by company_name with exact count
+        query = supabase.table('products').select('*', count='exact').eq('company_name', company_name).order('discovered_at', desc=True).range(offset, offset + limit - 1)
+        response = query.execute()
+        return {
+            "data": response.data,
+            "total": response.count,
+            "page": page,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.post("/api/products/{item_id}/ai-summary")
