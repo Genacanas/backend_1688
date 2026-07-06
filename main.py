@@ -120,6 +120,35 @@ def get_whitelist():
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+class ProductPotentialUpdate(BaseModel):
+    is_potential: bool
+
+@app.get("/api/products/potential")
+def get_potential_products(page: int = 1, limit: int = 100):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        offset = (page - 1) * limit
+        query = supabase.table('products').select('*', count='exact').eq('is_potential', True).order('discovered_at', desc=True).range(offset, offset + limit - 1)
+        response = query.execute()
+        return {
+            "data": response.data,
+            "total": response.count,
+            "page": page,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/products/{item_id}/potential")
+def update_product_potential(item_id: str, update: ProductPotentialUpdate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').update({"is_potential": update.is_potential}).eq('item_id', item_id).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/products/{cat_id}")
 def get_products(cat_id: str, page: int = 1, page_size: int = 20):
@@ -213,36 +242,6 @@ def get_shop_products_by_name(company_name: str, page: int = 1, limit: int = 100
             "page": page,
             "limit": limit
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-class ProductPotentialUpdate(BaseModel):
-    is_potential: bool
-
-@app.get("/api/products/potential")
-def get_potential_products(page: int = 1, limit: int = 100):
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase no está configurado")
-    try:
-        offset = (page - 1) * limit
-        query = supabase.table('products').select('*', count='exact').eq('is_potential', True).order('discovered_at', desc=True).range(offset, offset + limit - 1)
-        response = query.execute()
-        return {
-            "data": response.data,
-            "total": response.count,
-            "page": page,
-            "limit": limit
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/api/products/{item_id}/potential")
-def update_product_potential(item_id: str, update: ProductPotentialUpdate):
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase no está configurado")
-    try:
-        response = supabase.table('products').update({"is_potential": update.is_potential}).eq('item_id', item_id).execute()
-        return {"success": True, "data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
