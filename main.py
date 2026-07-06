@@ -93,7 +93,7 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
                 break
             offset += chunk_size
 
-        filtered = [p for p in all_products if p.get('company_name') in tracked_set]
+        filtered = [p for p in all_products if p.get('company_name') in tracked_set and not p.get('is_reviewed')]
         total = len(filtered)
         
         start_idx = (page - 1) * limit
@@ -178,6 +178,23 @@ def get_products(cat_id: str, page: int = 1, page_size: int = 20):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error leyendo de Supabase: {str(e)}")
+
+class ProductReviewUpdate(BaseModel):
+    item_ids: list[str]
+
+@app.put("/api/products/review")
+def update_products_review(update: ProductReviewUpdate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        # Check if item_ids is not empty to avoid postgrest syntax errors
+        if not update.item_ids:
+            return {"success": True, "count": 0}
+            
+        response = supabase.table('products').update({"is_reviewed": True}).in_('item_id', update.item_ids).execute()
+        return {"success": True, "count": len(response.data) if response.data else 0}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 class ShopStatusUpdate(BaseModel):
     status: str
