@@ -256,11 +256,8 @@ def generate_ai_summary(item_id: str):
     client = OpenAI(api_key=OPENAI_API_KEY)
     
     prompt = f"""You are an expert e-commerce product analyst. 
-Based on the following product title and technical properties from a wholesale supplier, write a short, compelling paragraph explaining:
-1. What the product is.
-2. Why it is unique or its main selling points.
-
-Keep it concise (around 3-4 sentences maximum). Make it easy to read for a buyer.
+Based on the following product title and technical properties from a wholesale supplier, explain what the product is and its main selling point.
+IMPORTANT: Your response MUST be extremely short (maximum 10 to 15 words).
 
 Product Title: {eng_title}
 
