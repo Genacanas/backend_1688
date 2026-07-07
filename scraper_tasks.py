@@ -198,7 +198,11 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
         if insert_data:
             supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
             logger.products_found += len(insert_data)
-            logger.log(f"  ✓ +{len(insert_data)} products saved with gallery and props.")
+            
+            if deep_fetch:
+                logger.log(f"  ✓ +{len(insert_data)} products saved with gallery and props.")
+            else:
+                logger.log(f"  ✓ +{len(insert_data)} products saved.")
             
             # Launch duplicate detection in background
             for data in insert_data:
