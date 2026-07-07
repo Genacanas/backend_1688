@@ -23,7 +23,12 @@ def hamming_distance(bin_str1: str, bin_str2: str) -> int:
 def get_image_phash(url: str):
     """Descarga la imagen en memoria y calcula su pHash (devuelve el hash en formato binario de 64 chars)"""
     try:
-        response = requests.get(url, timeout=10)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://www.1688.com/'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         img = Image.open(BytesIO(response.content)).convert("RGB")
         phash = imagehash.phash(img)
         # Convertir a string hexadecimal, luego a binario de 64 bits
