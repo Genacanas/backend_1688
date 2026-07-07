@@ -20,7 +20,7 @@ else:
 
 # In-memory dictionary for real-time polling from the frontend
 jobs_state = {}
-# Format: { "job_id": { "status": "running"|"done"|"error", "logs": [...], "type": "..." } }
+# Format: { "job_id": { "status": "running"|"done"|"error"|"cancelled", "logs": [...], "type": "...", "cancel_requested": bool } }
 
 class JobLogger:
     def __init__(self, job_id: str, job_type: str):
@@ -34,7 +34,8 @@ class JobLogger:
             "job_type": self.job_type,
             "logs": [],
             "products_found": 0,
-            "shops_found": 0
+            "shops_found": 0,
+            "cancel_requested": False
         }
         
     def log(self, message: str):
@@ -67,9 +68,23 @@ class JobLogger:
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq('id', self.job_id).execute()
 
+    def cancelled(self):
+        jobs_state[self.job_id]["status"] = "cancelled"
+        jobs_state[self.job_id]["products_found"] = self.products_found
+        jobs_state[self.job_id]["shops_found"] = self.shops_found
+        self.log("⚠️ Job cancelled by user.")
+        if supabase:
+            supabase.table('scraper_jobs').update({
+                "status": "cancelled",
+                "logs": jobs_state[self.job_id]["logs"],
+                "products_found": self.products_found,
+                "shops_found": self.shops_found,
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }).eq('id', self.job_id).execute()
+
     def error(self, err_msg: str):
         jobs_state[self.job_id]["status"] = "error"
-        self.log(f"ERROR FATAL: {err_msg}")
+        self.log(f"FATAL ERROR: {err_msg}")
         if supabase:
             supabase.table('scraper_jobs').update({
                 "status": "error",
@@ -78,9 +93,15 @@ class JobLogger:
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq('id', self.job_id).execute()
 
+    def is_cancel_requested(self):
+        return jobs_state.get(self.job_id, {}).get("cancel_requested", False)
+
 
 def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLogger):
-    """Extrae los 20 productos más nuevos de una tienda"""
+    """Extracts the newest 20 products from a shop"""
+    if logger.is_cancel_requested():
+        return
+        
     try:
         res = requests.get('http://api.tmapi.top/1688/shop/items', params={
             'apiToken': TMAPI_TOKEN,
@@ -93,10 +114,10 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
         items = res.json().get('data', {}).get('items', [])
         
         if not items:
-            logger.log("  - Sin productos para extraer.")
+            logger.log("  - No products to extract.")
             return
             
-        # 1. Filtrar productos de menos de 13 dígitos
+        # 1. Filter products with less than 13 digits
         valid_items = []
         item_ids_to_check = []
         for item in items:
@@ -105,7 +126,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                 valid_items.append(item)
                 item_ids_to_check.append(item_id_prod)
 
-        # 2. Filtrar productos que ya existen en la base de datos para no gastar créditos
+        # 2. Filter products that already exist in the database to save credits
         new_items = []
         if valid_items and supabase:
             existing_res = supabase.table('products').select('item_id').in_('item_id', item_ids_to_check).execute()
@@ -115,19 +136,22 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             new_items = valid_items
 
         if not new_items:
-            logger.log("  - Todos los productos extraídos ya existen en la base de datos o son inválidos.")
+            logger.log("  - All extracted products already exist or are invalid.")
             return
 
-        logger.log(f"  Descargando detalles profundos de {len(new_items)} productos NUEVOS (esto tomará unos segundos)...")
+        logger.log(f"  Downloading deep details for {len(new_items)} NEW products (this will take a few seconds)...")
         
         insert_data = []
         for i, item in enumerate(new_items):
+            if logger.is_cancel_requested():
+                break
+                
             item_id_prod = str(item.get('item_id', ''))
                 
             sale_info = item.get('sale_info', {})
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
             
-            # Extraer detalles profundos
+            # Extract deep details
             english_title = item.get('title', '')
             product_props = []
             main_imgs = [item.get('img', '')]
@@ -145,9 +169,9 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                     product_props = det_data.get('product_props', [])
                     main_imgs = det_data.get('main_imgs', main_imgs)
                     
-                time.sleep(0.5) # Respetar rate limits
+                time.sleep(0.5) # Respect rate limits
             except Exception as e:
-                logger.log(f"  ⚠️ Error obteniendo detalles de {item_id_prod}: {e}")
+                logger.log(f"  ⚠️ Error getting details for {item_id_prod}: {e}")
             
             insert_data.append({
                 'item_id': item_id_prod,
@@ -165,47 +189,51 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             })
             
             if (i+1) % 5 == 0:
-                logger.log(f"  ... {i+1}/{len(new_items)} procesados")
+                logger.log(f"  ... {i+1}/{len(new_items)} processed")
             
         if insert_data:
             supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
             logger.products_found += len(insert_data)
-            logger.log(f"  ✓ +{len(insert_data)} productos guardados con galería y props.")
+            logger.log(f"  ✓ +{len(insert_data)} products saved with gallery and props.")
             
-            # Lanzar detección de duplicados en background para no bloquear el scraper
+            # Launch duplicate detection in background
             for data in insert_data:
                 if data.get('main_imgs'):
                     threading.Thread(target=process_product_duplicates, args=(data['item_id'], data['main_imgs'])).start()
             
     except Exception as e:
-        logger.log(f"  ❌ Error extrayendo productos de tienda: {e}")
+        logger.log(f"  ❌ Error extracting products from shop: {e}")
 
 # ==========================================
-# PROCESO UNIFICADO: Find New Shops
+# UNIFIED PROCESS: Find New Shops
 # ==========================================
 def run_find_new_shops(job_id: str):
     logger = JobLogger(job_id, "find_new_shops")
-    logger.log("Iniciando proceso: Búsqueda de nuevas tiendas desde categorías...")
+    logger.log("Starting process: Searching for new shops from categories...")
     
     if not TMAPI_TOKEN or not supabase:
-        logger.error("Faltan variables de entorno (TMAPI o SUPABASE)")
+        logger.error("Missing environment variables (TMAPI or SUPABASE)")
         return
         
     try:
         cat_res = supabase.table('categories').select('id, name_en').eq('is_whitelisted', True).execute()
         categories = cat_res.data
         if not categories:
-            logger.error("No hay categorías en la lista blanca.")
+            logger.error("No whitelisted categories found.")
             return
             
-        logger.log(f"Se encontraron {len(categories)} categorías en lista blanca.")
+        logger.log(f"Found {len(categories)} whitelisted categories.")
         url_cat = "http://api.tmapi.top/1688/category/items/v2"
         
         for i, cat in enumerate(categories):
+            if logger.is_cancel_requested():
+                logger.cancelled()
+                return
+                
             cat_id = cat['id']
             cat_name = cat['name_en']
             logger.log(f"---")
-            logger.log(f"[{i+1}/{len(categories)}] Analizando categoría: {cat_name}")
+            logger.log(f"[{i+1}/{len(categories)}] Analyzing category: {cat_name}")
             
             params = {
                 "apiToken": TMAPI_TOKEN,
@@ -222,10 +250,10 @@ def run_find_new_shops(job_id: str):
             items = data.get("data", {}).get("items", []) if data.get("data") else []
             
             if not items:
-                logger.log(f"No se encontraron items en categoría {cat_name}.")
+                logger.log(f"No items found in category {cat_name}.")
                 continue
                 
-            logger.log(f"Obtenidos {len(items)} productos frescos. Buscando tiendas únicas...")
+            logger.log(f"Obtained {len(items)} fresh products. Looking for unique shops...")
             
             shops_in_cat = {}
             for item in items:
@@ -242,14 +270,18 @@ def run_find_new_shops(job_id: str):
             new_company_names = [name for name in shops_in_cat.keys() if name not in existing_names]
             
             if not new_company_names:
-                logger.log("Todas las tiendas de esta página ya son conocidas.")
+                logger.log("All shops on this page are already known.")
                 continue
                 
-            logger.log(f"¡{len(new_company_names)} tiendas potenciales nuevas descubiertas!")
+            logger.log(f"¡{len(new_company_names)} new potential shops discovered!")
             
             for cname in new_company_names:
+                if logger.is_cancel_requested():
+                    logger.cancelled()
+                    return
+                    
                 ref_item_id = shops_in_cat[cname]
-                logger.log(f"> Explorando nueva tienda: {cname}")
+                logger.log(f"> Exploring new shop: {cname}")
                 
                 try:
                     det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={'apiToken': TMAPI_TOKEN, 'item_id': str(ref_item_id), 'language': 'en'}, timeout=20)
@@ -258,7 +290,7 @@ def run_find_new_shops(job_id: str):
                     shop_url = shop_info_detail.get('shop_url', '')
                     
                     if not member_id:
-                        logger.log(f"  - No se pudo obtener member_id, ignorando.")
+                        logger.log(f"  - Could not get member_id, ignoring.")
                         continue
                         
                     supabase.table('shops').upsert({
@@ -273,23 +305,23 @@ def run_find_new_shops(job_id: str):
                     fetch_shop_newest_products(member_id, cname, logger)
                     time.sleep(1)
                 except Exception as e:
-                    logger.log(f"  ❌ Error al procesar tienda {cname}: {e}")
+                    logger.log(f"  ❌ Error processing shop {cname}: {e}")
             
-        logger.log("✅ Proceso Find New Shops completado con éxito.")
+        logger.log("✅ Find New Shops process completed successfully.")
         logger.done()
         
     except Exception as e:
         logger.error(str(e))
 
 # ==========================================
-# PROCESO: Check New Products
+# PROCESS: Check New Products
 # ==========================================
 def run_check_new_products(job_id: str):
     logger = JobLogger(job_id, "check_new_products")
-    logger.log("Iniciando auditoría de tiendas en seguimiento (Tracking)...")
+    logger.log("Starting audit of tracked shops (Tracking)...")
     
     if not TMAPI_TOKEN or not supabase:
-        logger.error("Faltan variables de entorno.")
+        logger.error("Missing environment variables.")
         return
         
     try:
@@ -304,16 +336,20 @@ def run_check_new_products(job_id: str):
         
         shops = res.data
         if not shops:
-            logger.error("No hay tiendas en estado Tracking con member_id válido.")
+            logger.error("No shops in Tracking status with valid member_id.")
             return
             
-        logger.log(f"Se van a auditar {len(shops)} tiendas.")
+        logger.log(f"Will audit {len(shops)} shops.")
         
         for i, shop in enumerate(shops):
+            if logger.is_cancel_requested():
+                logger.cancelled()
+                return
+                
             company_name = shop['company_name']
             member_id = shop['member_id']
             
-            logger.log(f"[{i+1}/{len(shops)}] Revisando: {company_name}")
+            logger.log(f"[{i+1}/{len(shops)}] Auditing: {company_name}")
             
             fetch_shop_newest_products(member_id, company_name, logger)
             
@@ -323,7 +359,7 @@ def run_check_new_products(job_id: str):
             
             time.sleep(0.5)
             
-        logger.log("✅ Proceso Check New Products completado con éxito.")
+        logger.log("✅ Check New Products process completed successfully.")
         logger.done()
     except Exception as e:
         logger.error(str(e))

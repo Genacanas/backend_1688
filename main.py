@@ -74,6 +74,13 @@ def get_job_status(job_id: str):
             
     raise HTTPException(status_code=404, detail="Job not found")
 
+@app.post("/api/jobs/{job_id}/cancel")
+def cancel_job(job_id: str):
+    if job_id in scraper_tasks.jobs_state:
+        scraper_tasks.jobs_state[job_id]["cancel_requested"] = True
+        return {"message": "Cancel requested"}
+    raise HTTPException(status_code=404, detail="Job not active or not found")
+
 @app.get("/api/jobs")
 def get_recent_jobs(limit: int = 20):
     if not supabase:
