@@ -155,7 +155,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
             
             # Extract deep details
-            english_title = item.get('title', '')
+            english_title = ''  # Only populated from item_detail (not from shop/items which returns Chinese)
             product_props = []
             main_imgs = [item.get('img', '')]
             
@@ -164,12 +164,13 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                     det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={
                         'apiToken': TMAPI_TOKEN,
                         'item_id': item_id_prod,
-                        'language': 'en'
+                        'language': 'en',
+                        'optimize_title': 'true'
                     }, timeout=15)
                     
                     det_data = det_res.json().get('data', {})
                     if det_data:
-                        english_title = det_data.get('title', english_title)
+                        english_title = det_data.get('title', '')
                         product_props = det_data.get('product_props', [])
                         main_imgs = det_data.get('main_imgs', main_imgs)
                         
