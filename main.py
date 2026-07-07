@@ -160,7 +160,7 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
                 break
             offset += chunk_size
 
-        filtered = [p for p in all_products if p.get('company_name') in tracked_set and not p.get('is_reviewed') and len(str(p.get('item_id', ''))) >= 13]
+        filtered = [p for p in all_products if p.get('company_name') in tracked_set and not p.get('is_reviewed') and not p.get('is_duplicate') and len(str(p.get('item_id', ''))) >= 13]
         total = len(filtered)
         
         start_idx = (page - 1) * limit
