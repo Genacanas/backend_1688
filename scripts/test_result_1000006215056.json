@@ -1,0 +1,154 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "item_id": 1000006215056,
+    "product_url": "https://detail.1688.com/offer/1000006215056.html",
+    "title": "Cross-Border Aliexpress Same Model Butter-Based High Moisturizing Cream Export Full English Label Face Cream Kormesic Moisturizer",
+    "category_id": 1034763,
+    "root_category_id": 97,
+    "currency": "CNY",
+    "offer_unit": "瓶",
+    "product_props": [
+      {
+        "Brand": "KORMESIC"
+      },
+      {
+        "Whether to import": "No"
+      },
+      {
+        "Brand type": "Domestic brand"
+      },
+      {
+        "Product name": "Kormesic butter high moisturizing cream 170g (foreign language version)"
+      },
+      {
+        "Applicable people": "Lady"
+      },
+      {
+        "Suitable for skin type": "Mixed"
+      },
+      {
+        "Item number": "NO.KMC24961"
+      },
+      {
+        "Specifications": "Normal specifications"
+      },
+      {
+        "Production license number": "Cantonese makeup 20230009"
+      },
+      {
+        "Origin": "Guangdong"
+      },
+      {
+        "Shelf life": "3 years"
+      },
+      {
+        "Net content": "170 g"
+      },
+      {
+        "Main downstream platforms": "Ebay;Amazon;Wish;Aliexpress;Independent station;Lazada;Other1"
+      },
+      {
+        "There is an authorized private brand": "Yes1"
+      },
+      {
+        "Whether to provide special supply of goods for cross-border export": "Yes2"
+      },
+      {
+        "Cosmetic efficacy": "Other effects"
+      },
+      {
+        "Product specifications": "Kormesic butter high moisturizing cream 170g [cross-border sales only, domestic sales prohibited, purchase means disclaimer and responsibility]"
+      },
+      {
+        "Packaging type": "Basic packaging"
+      },
+      {
+        "Main sales area": "Africa;Europe;South america;Southeast asia;North america;Northeast asia;Middle east;Other2"
+      }
+    ],
+    "main_imgs": [
+      "https://cbu01.alicdn.com/img/ibank/O1CN01ws9JLu1PNH5vnETtx_!!2207747051828-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN015tMHgl1PNH8rcxvZM_!!2207747051828-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01oMQYwM1PNH5vF0Xqf_!!2207747051828-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01C0dGck1PNH5wgVy3z_!!2207747051828-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01VaW1ie1PNH5vsWYf2_!!2207747051828-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01BcWFwn1PNH5um2YVm_!!2207747051828-0-cib.jpg"
+    ],
+    "video_url": "https://cloud.video.taobao.com/play/u/2207747051828/p/2/e/6/t/1/529580630424.mp4",
+    "detail_url": "https://itemcdn.tmall.com/1688offer/icoss2308177296a57df7ef82ae5bef",
+    "sale_count": "0",
+    "sale_info": {
+      "sale_quantity_90days": 0
+    },
+    "price_info": {
+      "price": "1.70",
+      "price_min": "1.70",
+      "price_max": "1.70",
+      "origin_price_min": "1.70",
+      "origin_price_max": "1.70",
+      "discount_price": ""
+    },
+    "tiered_price_info": {
+      "begin_num": 1,
+      "prices": []
+    },
+    "mixed_batch": null,
+    "shop_info": {
+      "shop_name": "广州普思杰生物科技有限公司",
+      "shop_url": "https://winport.m.1688.com/page/index.html?memberId=b2b-2207747051828583af",
+      "seller_login_id": "泊诗妍厂家",
+      "seller_user_id": "2207747051828",
+      "seller_member_id": "b2b-2207747051828583af"
+    },
+    "delivery_info": {
+      "location": "广东省肇庆市",
+      "location_code": "31841530",
+      "delivery_fee": 2.5,
+      "unit_weight": 0,
+      "template_id": "18951539"
+    },
+    "service_tags": [
+      "7天无理由退货",
+      "晚发必赔"
+    ],
+    "sku_price_scale": "",
+    "sku_price_scale_original": "",
+    "sku_price_range": {},
+    "sku_props": [
+      {
+        "pid": "0",
+        "prop_name": "Product specifications",
+        "values": [
+          {
+            "vid": "0",
+            "name": "Kormesic butter high moisturizing cream 170g [cross-border sales only, domestic sales prohibited, purchase means disclaimer and responsibility]",
+            "imageUrl": "https://cbu01.alicdn.com/img/ibank/O1CN01BcWFwn1PNH5um2YVm_!!2207747051828-0-cib.jpg"
+          }
+        ]
+      }
+    ],
+    "skus": [
+      {
+        "skuid": "6244720667510",
+        "specid": "bc0922d4f351ffbe3f3410f876ab69d3",
+        "sale_price": "1.70",
+        "origin_price": "1.70",
+        "stock": 499683,
+        "props_ids": "0:0",
+        "props_names": "Product specifications:Kormesic butter high moisturizing cream 170g [cross-border sales only, domestic sales prohibited, purchase means disclaimer and responsibility]",
+        "package_info": {
+          "weight": 0.223,
+          "length": 6.1,
+          "width": 6.1,
+          "height": 8.2,
+          "volume": 305.122
+        }
+      }
+    ],
+    "is_sold_out": false,
+    "stock": 499683,
+    "promotions": []
+  }
+}

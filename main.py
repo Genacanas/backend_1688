@@ -2,7 +2,8 @@ import os
 import json
 import requests
 from datetime import datetime, timedelta, timezone
-from fastapi import FastAPI, HTTPException, Form
+import uuid
+from fastapi import FastAPI, HTTPException, Form, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +25,8 @@ else:
 
 app = FastAPI(title="1688 Scraper API")
 
+import scraper_tasks
+
 # Configurar CORS para permitir que el frontend de Vite se conecte
 app.add_middleware(
     CORSMiddleware,
@@ -32,6 +35,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- SCRAPER JOBS ENDPOINTS ---
+
+def create_job_record(job_type: str) -> str:
+    job_id = str(uuid.uuid4())
+    if supabase:
+        supabase.table('scraper_jobs').insert({
+            'id': job_id,
+            'job_type': job_type,
+            'status': 'running'
+        }).execute()
+    return job_id
+
+@app.post("/api/jobs/check-new-products")
+def start_check_new_products(background_tasks: BackgroundTasks):
+    job_id = create_job_record("check_new_products")
+    background_tasks.add_task(scraper_tasks.run_check_new_products, job_id)
+    return {"job_id": job_id, "message": "Job started"}
+
+@app.post("/api/jobs/find-new-shops")
+def start_find_new_shops(background_tasks: BackgroundTasks):
+    job_id = create_job_record("find_new_shops")
+    background_tasks.add_task(scraper_tasks.run_find_new_shops, job_id)
+    return {"job_id": job_id, "message": "Job started"}
+
+@app.get("/api/jobs/{job_id}")
+def get_job_status(job_id: str):
+    # First check memory for real-time logs
+    if job_id in scraper_tasks.jobs_state:
+        return scraper_tasks.jobs_state[job_id]
+        
+    # If not in memory (e.g. backend restarted), fetch from Supabase
+    if supabase:
+        res = supabase.table('scraper_jobs').select('*').eq('id', job_id).execute()
+        if res.data:
+            return res.data[0]
+            
+    raise HTTPException(status_code=404, detail="Job not found")
+
+@app.get("/api/jobs")
+def get_recent_jobs(limit: int = 20):
+    if not supabase:
+        return {"data": []}
+    res = supabase.table('scraper_jobs').select('*').order('started_at', desc=True).limit(limit).execute()
+    return {"data": res.data}
+
+# ------------------------------
 
 @app.post("/api/login")
 def login(username: str = Form(...), password: str = Form(...)):
