@@ -312,7 +312,7 @@ def run_find_new_shops(job_id: str):
                     
                     logger.shops_found += 1
                     
-                    fetch_shop_newest_products(member_id, cname, logger, deep_fetch=False)
+                    fetch_shop_newest_products(member_id, cname, logger)
                     time.sleep(1)
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
