@@ -189,7 +189,8 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                 'sold_count': str(qty) if qty else '',
                 'company_name': company_name,
                 'product_props': product_props,
-                'main_imgs': main_imgs
+                'main_imgs': main_imgs,
+                'discovered_at': datetime.now(timezone.utc).isoformat()
             })
             
             if (i+1) % 5 == 0:
