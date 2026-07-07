@@ -90,30 +90,62 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
         }, timeout=20)
         items = res.json().get('data', {}).get('items', [])
         
+        if not items:
+            logger.log("  - Sin productos para extraer.")
+            return
+            
+        logger.log(f"  Descargando detalles profundos de {len(items)} productos (esto tomará unos segundos)...")
+        
         insert_data = []
-        for item in items:
+        for i, item in enumerate(items):
             item_id_prod = str(item.get('item_id', ''))
             sale_info = item.get('sale_info', {})
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
             
+            # Extraer detalles profundos
+            english_title = item.get('title', '')
+            product_props = []
+            main_imgs = [item.get('img', '')]
+            
+            try:
+                det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={
+                    'apiToken': TMAPI_TOKEN,
+                    'item_id': item_id_prod,
+                    'language': 'en'
+                }, timeout=15)
+                
+                det_data = det_res.json().get('data', {})
+                if det_data:
+                    english_title = det_data.get('title', english_title)
+                    product_props = det_data.get('product_props', [])
+                    main_imgs = det_data.get('main_imgs', main_imgs)
+                    
+                time.sleep(0.5) # Respetar rate limits
+            except Exception as e:
+                logger.log(f"  ⚠️ Error obteniendo detalles de {item_id_prod}: {e}")
+            
             insert_data.append({
                 'item_id': item_id_prod,
-                'title': item.get('title', ''),
+                'title': item.get('title', ''), 
+                'english_title': english_title,
                 'price': float(item.get('price') or 0),
                 'moq': 1.0,
-                'image_url': item.get('img', ''),
+                'image_url': item.get('img', '') or (main_imgs[0] if main_imgs else ''),
                 'product_url': f"https://detail.1688.com/offer/{item_id_prod}.html",
                 'currency': 'CNY',
                 'sold_count': str(qty) if qty else '',
                 'company_name': company_name,
+                'product_props': product_props,
+                'main_imgs': main_imgs
             })
+            
+            if (i+1) % 5 == 0:
+                logger.log(f"  ... {i+1}/{len(items)} procesados")
             
         if insert_data:
             supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
             logger.products_found += len(insert_data)
-            logger.log(f"  ✓ +{len(insert_data)} nuevos productos extraídos.")
-        else:
-            logger.log("  - Sin productos para extraer.")
+            logger.log(f"  ✓ +{len(insert_data)} productos guardados con galería y props.")
             
     except Exception as e:
         logger.log(f"  ❌ Error extrayendo productos de tienda: {e}")
