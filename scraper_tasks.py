@@ -1,9 +1,11 @@
 import os
 import requests
 import time
+import threading
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from duplicate_detector import process_product_duplicates
 
 load_dotenv()
 
@@ -149,6 +151,11 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
             logger.products_found += len(insert_data)
             logger.log(f"  ✓ +{len(insert_data)} productos guardados con galería y props.")
+            
+            # Lanzar detección de duplicados en background para no bloquear el scraper
+            for data in insert_data:
+                if data.get('main_imgs'):
+                    threading.Thread(target=process_product_duplicates, args=(data['item_id'], data['main_imgs'])).start()
             
     except Exception as e:
         logger.log(f"  ❌ Error extrayendo productos de tienda: {e}")
