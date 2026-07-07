@@ -2,6 +2,8 @@ fastapi
 uvicorn
 requests
 python-dotenv
-supabase
+supabase==2.3.4
+imagehash==4.3.1
+Pillow==10.2.0
 python-multipart
 openai
