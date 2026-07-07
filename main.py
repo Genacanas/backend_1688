@@ -110,11 +110,21 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        # Get full details of tracked shops (url, score, age)
-        tracked_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').execute()
-        tracked_set = {s['company_name'] for s in tracked_res.data if s.get('company_name')}
+        # Fetch full details of tracked shops in chunks to bypass 1000 limit
+        tracked_shops = []
+        shop_offset = 0
+        shop_chunk = 1000
+        while True:
+            chunk_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').range(shop_offset, shop_offset + shop_chunk - 1).execute()
+            data = chunk_res.data
+            tracked_shops.extend(data)
+            if len(data) < shop_chunk:
+                break
+            shop_offset += shop_chunk
+            
+        tracked_set = {s['company_name'] for s in tracked_shops if s.get('company_name')}
         # Build a lookup map: company_name -> shop details
-        shops_map = {s['company_name']: s for s in tracked_res.data if s.get('company_name')}
+        shops_map = {s['company_name']: s for s in tracked_shops if s.get('company_name')}
 
         if not tracked_set:
             return {"data": [], "shops": {}}
