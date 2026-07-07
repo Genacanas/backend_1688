@@ -96,13 +96,33 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             logger.log("  - Sin productos para extraer.")
             return
             
-        logger.log(f"  Descargando detalles profundos de {len(items)} productos (esto tomará unos segundos)...")
+        # 1. Filtrar productos de menos de 13 dígitos
+        valid_items = []
+        item_ids_to_check = []
+        for item in items:
+            item_id_prod = str(item.get('item_id', ''))
+            if len(item_id_prod) >= 13:
+                valid_items.append(item)
+                item_ids_to_check.append(item_id_prod)
+
+        # 2. Filtrar productos que ya existen en la base de datos para no gastar créditos
+        new_items = []
+        if valid_items and supabase:
+            existing_res = supabase.table('products').select('item_id').in_('item_id', item_ids_to_check).execute()
+            existing_ids = {str(r['item_id']) for r in existing_res.data}
+            new_items = [item for item in valid_items if str(item.get('item_id', '')) not in existing_ids]
+        else:
+            new_items = valid_items
+
+        if not new_items:
+            logger.log("  - Todos los productos extraídos ya existen en la base de datos o son inválidos.")
+            return
+
+        logger.log(f"  Descargando detalles profundos de {len(new_items)} productos NUEVOS (esto tomará unos segundos)...")
         
         insert_data = []
-        for i, item in enumerate(items):
+        for i, item in enumerate(new_items):
             item_id_prod = str(item.get('item_id', ''))
-            if len(item_id_prod) < 13:
-                continue
                 
             sale_info = item.get('sale_info', {})
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
@@ -145,7 +165,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             })
             
             if (i+1) % 5 == 0:
-                logger.log(f"  ... {i+1}/{len(items)} procesados")
+                logger.log(f"  ... {i+1}/{len(new_items)} procesados")
             
         if insert_data:
             supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
