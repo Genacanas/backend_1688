@@ -355,11 +355,13 @@ def generate_ai_summary(item_id: str):
                 data = tmapi_res.json().get('data', {})
                 eng_title = data.get('title', '')
                 props = data.get('product_props', [])
+                main_imgs = data.get('main_imgs', [])
                 
                 # Update DB with fetched TMAPI info
                 supabase.table('products').update({
                     'english_title': eng_title,
-                    'product_props': props
+                    'product_props': props,
+                    'main_imgs': main_imgs
                 }).eq('item_id', item_id).execute()
         except Exception as e:
             print(f"TMAPI error: {e}")

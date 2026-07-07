@@ -97,7 +97,7 @@ class JobLogger:
         return jobs_state.get(self.job_id, {}).get("cancel_requested", False)
 
 
-def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLogger):
+def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLogger, deep_fetch: bool = True):
     """Extracts the newest 20 products from a shop"""
     if logger.is_cancel_requested():
         return
@@ -139,7 +139,10 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             logger.log("  - All extracted products already exist or are invalid.")
             return
 
-        logger.log(f"  Downloading deep details for {len(new_items)} NEW products (this will take a few seconds)...")
+        if deep_fetch:
+            logger.log(f"  Downloading deep details for {len(new_items)} NEW products (this will take a few seconds)...")
+        else:
+            logger.log(f"  Saving baseline for {len(new_items)} products (skipping deep fetch)...")
         
         insert_data = []
         for i, item in enumerate(new_items):
@@ -156,22 +159,23 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             product_props = []
             main_imgs = [item.get('img', '')]
             
-            try:
-                det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={
-                    'apiToken': TMAPI_TOKEN,
-                    'item_id': item_id_prod,
-                    'language': 'en'
-                }, timeout=15)
-                
-                det_data = det_res.json().get('data', {})
-                if det_data:
-                    english_title = det_data.get('title', english_title)
-                    product_props = det_data.get('product_props', [])
-                    main_imgs = det_data.get('main_imgs', main_imgs)
+            if deep_fetch:
+                try:
+                    det_res = requests.get('http://api.tmapi.top/1688/item_detail', params={
+                        'apiToken': TMAPI_TOKEN,
+                        'item_id': item_id_prod,
+                        'language': 'en'
+                    }, timeout=15)
                     
-                time.sleep(0.5) # Respect rate limits
-            except Exception as e:
-                logger.log(f"  ⚠️ Error getting details for {item_id_prod}: {e}")
+                    det_data = det_res.json().get('data', {})
+                    if det_data:
+                        english_title = det_data.get('title', english_title)
+                        product_props = det_data.get('product_props', [])
+                        main_imgs = det_data.get('main_imgs', main_imgs)
+                        
+                    time.sleep(0.5) # Respect rate limits
+                except Exception as e:
+                    logger.log(f"  ⚠️ Error getting details for {item_id_prod}: {e}")
             
             insert_data.append({
                 'item_id': item_id_prod,
@@ -297,12 +301,12 @@ def run_find_new_shops(job_id: str):
                         'company_name': cname,
                         'member_id': member_id,
                         'shop_url': shop_url,
-                        'status': 'pending'
+                        'status': 'tracking'
                     }, on_conflict='company_name').execute()
                     
                     logger.shops_found += 1
                     
-                    fetch_shop_newest_products(member_id, cname, logger)
+                    fetch_shop_newest_products(member_id, cname, logger, deep_fetch=False)
                     time.sleep(1)
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
