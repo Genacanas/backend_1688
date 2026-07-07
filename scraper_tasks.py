@@ -1,7 +1,7 @@
 import os
 import requests
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -37,7 +37,7 @@ class JobLogger:
         
     def log(self, message: str):
         print(f"[{self.job_id}] {message}")
-        time_str = datetime.now().strftime("%H:%M:%S")
+        time_str = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
         log_line = f"[{time_str}] {message}"
         jobs_state[self.job_id]["logs"].append(log_line)
         jobs_state[self.job_id]["products_found"] = self.products_found
@@ -62,7 +62,7 @@ class JobLogger:
                 "logs": jobs_state[self.job_id]["logs"],
                 "products_found": self.products_found,
                 "shops_found": self.shops_found,
-                "completed_at": datetime.now().isoformat()
+                "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq('id', self.job_id).execute()
 
     def error(self, err_msg: str):
@@ -73,7 +73,7 @@ class JobLogger:
                 "status": "error",
                 "logs": jobs_state[self.job_id]["logs"],
                 "error_message": err_msg,
-                "completed_at": datetime.now().isoformat()
+                "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq('id', self.job_id).execute()
 
 
@@ -256,7 +256,7 @@ def run_check_new_products(job_id: str):
             fetch_shop_newest_products(member_id, company_name, logger)
             
             supabase.table('shops').update({
-                'last_checked_products_at': datetime.now().isoformat()
+                'last_checked_products_at': datetime.now(timezone.utc).isoformat()
             }).eq('company_name', company_name).execute()
             
             time.sleep(0.5)
