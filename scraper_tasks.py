@@ -166,7 +166,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                         'item_id': item_id_prod,
                         'language': 'en',
                         'optimize_title': 'true'
-                    }, timeout=15)
+                    }, timeout=45)
                     
                     det_data = det_res.json().get('data', {})
                     if det_data:
