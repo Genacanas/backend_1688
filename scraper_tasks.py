@@ -99,6 +99,9 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
         insert_data = []
         for i, item in enumerate(items):
             item_id_prod = str(item.get('item_id', ''))
+            if len(item_id_prod) < 13:
+                continue
+                
             sale_info = item.get('sale_info', {})
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
             
