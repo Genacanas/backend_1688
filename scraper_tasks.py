@@ -29,7 +29,7 @@ class JobLogger:
         
         jobs_state[self.job_id] = {
             "status": "running",
-            "type": self.job_type,
+            "job_type": self.job_type,
             "logs": [],
             "products_found": 0,
             "shops_found": 0
@@ -40,6 +40,8 @@ class JobLogger:
         time_str = datetime.now().strftime("%H:%M:%S")
         log_line = f"[{time_str}] {message}"
         jobs_state[self.job_id]["logs"].append(log_line)
+        jobs_state[self.job_id]["products_found"] = self.products_found
+        jobs_state[self.job_id]["shops_found"] = self.shops_found
         
         # Update supabase periodically (every 5 logs)
         if len(jobs_state[self.job_id]["logs"]) % 5 == 0:
@@ -52,6 +54,8 @@ class JobLogger:
 
     def done(self):
         jobs_state[self.job_id]["status"] = "done"
+        jobs_state[self.job_id]["products_found"] = self.products_found
+        jobs_state[self.job_id]["shops_found"] = self.shops_found
         if supabase:
             supabase.table('scraper_jobs').update({
                 "status": "done",
