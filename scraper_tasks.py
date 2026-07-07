@@ -131,7 +131,7 @@ def run_find_new_shops(job_id: str):
         
     try:
         cat_res = supabase.table('categories').select('id, name_en').eq('is_whitelisted', True).execute()
-        categories = cat_res.data[:1]  # TEMPORAL: Solo 1 categoria para probar rápido
+        categories = cat_res.data
         if not categories:
             logger.error("No hay categorías en la lista blanca.")
             return
