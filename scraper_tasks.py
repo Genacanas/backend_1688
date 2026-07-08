@@ -35,6 +35,7 @@ class JobLogger:
             "logs": [],
             "products_found": 0,
             "shops_found": 0,
+            "category_stats": {},
             "cancel_requested": False
         }
         
@@ -45,6 +46,15 @@ class JobLogger:
         jobs_state[self.job_id]["logs"].append(log_line)
         jobs_state[self.job_id]["products_found"] = self.products_found
         jobs_state[self.job_id]["shops_found"] = self.shops_found
+        
+    def update_category_stats(self, category: str, count: int):
+        if count > 0:
+            if "category_stats" not in jobs_state[self.job_id]:
+                jobs_state[self.job_id]["category_stats"] = {}
+            if category in jobs_state[self.job_id]["category_stats"]:
+                jobs_state[self.job_id]["category_stats"][category] += count
+            else:
+                jobs_state[self.job_id]["category_stats"][category] = count
         
         # Update supabase periodically (every 5 logs)
         if len(jobs_state[self.job_id]["logs"]) % 5 == 0:
@@ -65,6 +75,7 @@ class JobLogger:
                 "logs": jobs_state[self.job_id]["logs"],
                 "products_found": self.products_found,
                 "shops_found": self.shops_found,
+                "category_stats": jobs_state[self.job_id].get("category_stats", {}),
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq('id', self.job_id).execute()
 
@@ -246,6 +257,8 @@ def run_find_new_shops(job_id: str):
             logger.log(f"---")
             logger.log(f"[{i+1}/{len(categories)}] Analyzing category: {cat_name}")
             
+            initial_shops_count = logger.shops_found
+            
             params = {
                 "apiToken": TMAPI_TOKEN,
                 "language": "en",
@@ -317,7 +330,18 @@ def run_find_new_shops(job_id: str):
                     time.sleep(1)
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
+                    
+            cat_shops_found = logger.shops_found - initial_shops_count
+            logger.update_category_stats(cat_name, cat_shops_found)
             
+        logger.log("--- SUMMARY PER CATEGORY ---")
+        stats = jobs_state[job_id].get("category_stats", {})
+        if not stats:
+            logger.log("No new shops found in any category.")
+        else:
+            for cat, count in stats.items():
+                logger.log(f"{cat}: {count} new shops")
+        logger.log("----------------------------")
         logger.log("✅ Find New Shops process completed successfully.")
         logger.done()
         
