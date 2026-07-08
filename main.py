@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 
 from openai import OpenAI
+from duplicate_detector import batch_process_duplicates
 
 load_dotenv()
 TMAPI_TOKEN = os.getenv("TMAPI_TOKEN")
@@ -98,6 +99,12 @@ def start_check_new_products(background_tasks: BackgroundTasks):
 def start_find_new_shops(background_tasks: BackgroundTasks):
     job_id = create_job_record("find_new_shops")
     background_tasks.add_task(scraper_tasks.run_find_new_shops, job_id)
+    return {"job_id": job_id, "message": "Job started"}
+
+@app.post("/api/jobs/manual-deduplication")
+def start_manual_deduplication(background_tasks: BackgroundTasks):
+    job_id = create_job_record("manual_deduplication")
+    background_tasks.add_task(scraper_tasks.run_manual_deduplication_job, job_id)
     return {"job_id": job_id, "message": "Job started"}
 
 @app.get("/api/jobs/{job_id}")
