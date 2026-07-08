@@ -185,7 +185,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                         product_props = det_data.get('product_props', [])
                         main_imgs = det_data.get('main_imgs', main_imgs)
                         
-                    time.sleep(0.5) # Respect rate limits
+                    time.sleep(0.06) # Respect rate limits
                 except Exception as e:
                     logger.log(f"  ⚠️ Error getting details for {item_id_prod}: {e}")
             
@@ -259,19 +259,26 @@ def run_find_new_shops(job_id: str):
             
             initial_shops_count = logger.shops_found
             
-            params = {
-                "apiToken": TMAPI_TOKEN,
-                "language": "en",
-                "cat_id": cat_id,
-                "page": 1,
-                "page_size": 50,
-                "new_arrival": "true",
-                "sort": "default"
-            }
-            
-            res = requests.get(url_cat, params=params, timeout=25)
-            data = res.json()
-            items = data.get("data", {}).get("items", []) if data.get("data") else []
+            items = []
+            for page_num in range(1, 3):
+                params = {
+                    "apiToken": TMAPI_TOKEN,
+                    "language": "en",
+                    "cat_id": cat_id,
+                    "page": page_num,
+                    "page_size": 50,
+                    "new_arrival": "true",
+                    "sort": "default"
+                }
+                
+                try:
+                    res = requests.get(url_cat, params=params, timeout=25)
+                    data = res.json()
+                    page_items = data.get("data", {}).get("items", []) if data.get("data") else []
+                    if page_items:
+                        items.extend(page_items)
+                except Exception as e:
+                    logger.log(f"Error fetching page {page_num} for category {cat_name}: {e}")
             
             if not items:
                 logger.log(f"No items found in category {cat_name}.")
@@ -327,7 +334,7 @@ def run_find_new_shops(job_id: str):
                     logger.shops_found += 1
                     
                     fetch_shop_newest_products(member_id, cname, logger)
-                    time.sleep(1)
+                    time.sleep(0.05)
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
                     
@@ -405,7 +412,7 @@ def run_check_new_products(job_id: str):
                 'last_checked_products_at': datetime.now(timezone.utc).isoformat()
             }).eq('company_name', company_name).execute()
             
-            time.sleep(0.5)
+            time.sleep(0.05)
             
         logger.log("✅ Check New Products process completed successfully.")
         logger.done()
