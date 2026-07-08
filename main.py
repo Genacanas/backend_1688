@@ -25,6 +25,46 @@ else:
 
 app = FastAPI(title="1688 Scraper API")
 
+# --- AMAZON CATEGORIES INDEX ---
+amazon_roots = []
+amazon_index = {}
+
+try:
+    with open("amazon_us_categories_full.json", "r", encoding="utf-8") as f:
+        amazon_data = json.load(f)
+    
+    roots = amazon_data.get("categories", [])
+    
+    # Store stripped roots
+    amazon_roots = [{
+        "id": r.get("id"),
+        "name": r.get("name"),
+        "searchIndex": r.get("searchIndex"),
+        "childCount": r.get("childCount", 0)
+    } for r in roots]
+    
+    def build_index(nodes):
+        for node in nodes:
+            children = node.get("children", [])
+            stripped_children = []
+            for child in children:
+                stripped_children.append({
+                    "id": child.get("id"),
+                    "name": child.get("name"),
+                    "searchIndex": child.get("searchIndex"),
+                    "childCount": child.get("childCount", 0)
+                })
+            amazon_index[node["id"]] = stripped_children
+            if children:
+                build_index(children)
+                
+    build_index(roots)
+    print(f"Loaded Amazon Categories: {len(amazon_roots)} roots, {len(amazon_index)} nodes indexed.")
+except Exception as e:
+    print(f"Warning: Could not load amazon_us_categories_full.json: {e}")
+
+# -------------------------------
+
 import scraper_tasks
 
 # Configurar CORS para permitir que el frontend de Vite se conecte
@@ -87,6 +127,14 @@ def get_recent_jobs(limit: int = 20):
         return {"data": []}
     res = supabase.table('scraper_jobs').select('*').order('started_at', desc=True).limit(limit).execute()
     return {"data": res.data}
+
+@app.get("/api/amazon-categories")
+def get_amazon_categories(parent_id: Optional[str] = None):
+    if not parent_id:
+        return {"data": amazon_roots}
+    if parent_id in amazon_index:
+        return {"data": amazon_index[parent_id]}
+    raise HTTPException(status_code=404, detail="Category not found")
 
 # ------------------------------
 
