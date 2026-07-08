@@ -336,16 +336,29 @@ def run_check_new_products(job_id: str):
         return
         
     try:
-        res = (
-            supabase.table('shops')
-            .select('company_name, member_id, shop_url')
-            .eq('status', 'tracking')
-            .not_.is_('member_id', 'null')
-            .neq('member_id', '')
-            .execute()
-        )
+        shops = []
+        page_size = 1000
+        start = 0
         
-        shops = res.data
+        while True:
+            res = (
+                supabase.table('shops')
+                .select('company_name, member_id, shop_url')
+                .eq('status', 'tracking')
+                .not_.is_('member_id', 'null')
+                .neq('member_id', '')
+                .range(start, start + page_size - 1)
+                .execute()
+            )
+            
+            data = res.data or []
+            shops.extend(data)
+            
+            if len(data) < page_size:
+                break
+                
+            start += page_size
+
         if not shops:
             logger.error("No shops in Tracking status with valid member_id.")
             return
