@@ -222,7 +222,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             products_for_dedup = [d for d in insert_data if d.get('main_imgs')]
             if products_for_dedup:
                 logger.log(f"  Running batch duplicate detection for {len(products_for_dedup)} products...")
-                batch_process_duplicates(products_for_dedup)
+                batch_process_duplicates(products_for_dedup, logger=logger)
             
     except Exception as e:
         logger.log(f"  ❌ Error extracting products from shop: {e}")
@@ -476,8 +476,12 @@ def run_manual_deduplication_job(job_id: str):
             return
             
         logger.log(f"Found {len(all_products)} products. Starting batch process...")
-        batch_process_duplicates(all_products, logger=logger)
+        was_cancelled = batch_process_duplicates(all_products, logger=logger)
         
+        if was_cancelled:
+            logger.cancelled()
+            return
+            
         logger.log("✅ Manual Deduplication completed successfully.")
         logger.done()
         

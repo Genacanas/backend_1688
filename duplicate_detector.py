@@ -87,6 +87,10 @@ def batch_process_duplicates(products: list, logger=None):
         return
         
     for p in products:
+        if hasattr(logger, 'is_cancel_requested') and logger.is_cancel_requested():
+            log("Cancelación solicitada. Abortando deduplicación...")
+            return True
+            
         item_id = str(p.get('item_id'))
         main_imgs = p.get('main_imgs', [])
         
@@ -175,3 +179,4 @@ def batch_process_duplicates(products: list, logger=None):
                 log(f"    Error guardando hashes: {e}")
                 
     log("Batch processing completado.")
+    return False
