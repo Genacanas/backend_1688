@@ -307,8 +307,13 @@ def run_find_new_shops(job_id: str):
             if not shops_in_cat:
                 continue
                 
-            existing_res = supabase.table('shops').select('company_name').in_('company_name', list(shops_in_cat.keys())).execute()
-            existing_names = {r['company_name'] for r in existing_res.data}
+            existing_names = set()
+            shop_keys_list = list(shops_in_cat.keys())
+            chunk_size = 50
+            for i in range(0, len(shop_keys_list), chunk_size):
+                chunk = shop_keys_list[i:i+chunk_size]
+                existing_res = supabase.table('shops').select('company_name').in_('company_name', chunk).execute()
+                existing_names.update({r['company_name'] for r in existing_res.data})
             
             new_company_names = [name for name in shops_in_cat.keys() if name not in existing_names]
             
@@ -490,34 +495,39 @@ def run_deduplication_for_new_discoveries(logger: JobLogger):
         
     logger.log("Fetching pending New Discoveries...")
     all_products = []
-    offset = 0
-    chunk_size = 1000
     
-    while True:
-        if logger.is_cancel_requested():
-            logger.cancelled()
-            return
-            
-        chunk_query = (
-            supabase.table('products')
-            .select('item_id, main_imgs, company_name, image_url, english_title, title')
-            .eq('is_reviewed', False)
-            .is_('duplicate_status', 'null')
-            .gte('discovered_at', '2026-07-03T00:00:00')
-            .in_('company_name', tracked_list)
-            .range(offset, offset + chunk_size - 1)
-        )
-        chunk_res = chunk_query.execute()
-        data = chunk_res.data or []
+    # Chunk tracked_list to avoid 'URL component query too long'
+    shop_chunk_size = 50
+    for i in range(0, len(tracked_list), shop_chunk_size):
+        shop_chunk = tracked_list[i:i+shop_chunk_size]
         
-        # Filter for valid ID length in Python
-        for p in data:
-            if len(str(p.get('item_id', ''))) >= 13:
-                all_products.append(p)
+        offset = 0
+        chunk_size = 1000
+        while True:
+            if logger.is_cancel_requested():
+                logger.cancelled()
+                return
                 
-        if not data:
-            break
-        offset += len(data)
+            chunk_query = (
+                supabase.table('products')
+                .select('item_id, main_imgs, company_name, image_url, english_title, title')
+                .eq('is_reviewed', False)
+                .is_('duplicate_status', 'null')
+                .gte('discovered_at', '2026-07-03T00:00:00')
+                .in_('company_name', shop_chunk)
+                .range(offset, offset + chunk_size - 1)
+            )
+            chunk_res = chunk_query.execute()
+            data = chunk_res.data or []
+            
+            # Filter for valid ID length in Python
+            for p in data:
+                if len(str(p.get('item_id', ''))) >= 13:
+                    all_products.append(p)
+                    
+            if not data:
+                break
+            offset += len(data)
         
     if not all_products:
         logger.log("No pending products found to deduplicate.")
