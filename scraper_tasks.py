@@ -2,6 +2,7 @@ import os
 import requests
 import time
 import threading
+import concurrent.futures
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -50,18 +51,16 @@ class JobLogger:
             jobs_state[self.job_id]["shops_found"] = self.shops_found
         
     def update_category_stats(self, category: str, count: int):
-        if count > 0:
-            if "category_stats" not in jobs_state[self.job_id]:
-                jobs_state[self.job_id]["category_stats"] = {}
-            if category in jobs_state[self.job_id]["category_stats"]:
-                jobs_state[self.job_id]["category_stats"][category] += count
-            else:
-                jobs_state[self.job_id]["category_stats"][category] = count
-        
-        # Update supabase periodically (every 5 logs)
         with self._lock:
+            if count > 0:
+                if "category_stats" not in jobs_state[self.job_id]:
+                    jobs_state[self.job_id]["category_stats"] = {}
+                if category in jobs_state[self.job_id]["category_stats"]:
+                    jobs_state[self.job_id]["category_stats"][category] += count
+                else:
+                    jobs_state[self.job_id]["category_stats"][category] = count
             logs_count = len(jobs_state[self.job_id]["logs"])
-            
+        
         if logs_count % 5 == 0:
             if supabase:
                 with self._lock:
@@ -211,15 +210,17 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                 'discovered_at': datetime.now(timezone.utc).isoformat()
             }
 
-        import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(process_item, item) for item in new_items]
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 if logger.is_cancel_requested():
                     break
-                res = future.result()
-                if res:
-                    insert_data.append(res)
+                try:
+                    res = future.result()
+                    if res:
+                        insert_data.append(res)
+                except Exception as e:
+                    logger.log(f"  ⚠️ Item processing thread error: {e}")
                 if (i+1) % 5 == 0:
                     logger.log(f"  ... {i+1}/{len(new_items)} processed for {company_name}")
             
@@ -348,14 +349,21 @@ def run_find_new_shops(job_id: str):
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
                     
-            import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
                 futures = [executor.submit(process_new_shop, cname) for cname in new_company_names]
                 for future in concurrent.futures.as_completed(futures):
                     if logger.is_cancel_requested():
                         break
-                    future.result()
+                    try:
+                        future.result()
+                    except Exception as e:
+                        logger.log(f"  ⚠️ Shop thread error: {e}")
                     
+            # After parallel execution, check if cancel was requested
+            if logger.is_cancel_requested():
+                logger.cancelled()
+                return
+                
             cat_shops_found = logger.shops_found - initial_shops_count
             logger.update_category_stats(cat_name, cat_shops_found)
             
@@ -432,13 +440,19 @@ def run_check_new_products(job_id: str):
                 'last_checked_products_at': datetime.now(timezone.utc).isoformat()
             }).eq('company_name', company_name).execute()
 
-        import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = [executor.submit(process_shop, shop_data, i, len(shops)) for i, shop_data in enumerate(shops)]
             for future in concurrent.futures.as_completed(futures):
                 if logger.is_cancel_requested():
                     break
-                future.result()
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.log(f"  ⚠️ Shop thread error: {e}")
+        
+        if logger.is_cancel_requested():
+            logger.cancelled()
+            return
             
         # Auto-run deduplication for any new products found
         run_deduplication_for_new_discoveries(logger)
