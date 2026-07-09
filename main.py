@@ -126,6 +126,14 @@ def cancel_job(job_id: str):
     if job_id in scraper_tasks.jobs_state:
         scraper_tasks.jobs_state[job_id]["cancel_requested"] = True
         return {"message": "Cancel requested"}
+        
+    # Si el servidor se reinició, el job quedó huerfano en BD con estado "running". Lo forzamos a "cancelled".
+    if supabase:
+        res = supabase.table('scraper_jobs').select('status').eq('id', job_id).execute()
+        if res.data and res.data[0]['status'] == 'running':
+            supabase.table('scraper_jobs').update({'status': 'cancelled'}).eq('id', job_id).execute()
+            return {"message": "Job cancelled forcefully"}
+            
     raise HTTPException(status_code=404, detail="Job not active or not found")
 
 @app.get("/api/jobs")
@@ -165,7 +173,7 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        # Fetch full details of tracked shops in chunks to bypass 1000 limit
+        # Fetch tracked shop names and details in chunks
         tracked_shops = []
         shop_offset = 0
         shop_chunk = 1000
@@ -173,16 +181,15 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
             chunk_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').range(shop_offset, shop_offset + shop_chunk - 1).execute()
             data = chunk_res.data
             tracked_shops.extend(data)
-            if len(data) < shop_chunk:
+            if not data:
                 break
-            shop_offset += shop_chunk
+            shop_offset += len(data)
             
-        tracked_set = {s['company_name'] for s in tracked_shops if s.get('company_name')}
-        # Build a lookup map: company_name -> shop details
+        tracked_list = [s['company_name'] for s in tracked_shops if s.get('company_name')]
         shops_map = {s['company_name']: s for s in tracked_shops if s.get('company_name')}
 
-        if not tracked_set:
-            return {"data": [], "shops": {}}
+        if not tracked_list:
+            return {"data": [], "total": 0, "shops": {}, "page": page, "limit": limit}
 
         # Fallback to last 3 days if not provided
         if not start_date:
@@ -190,41 +197,44 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if not end_date:
             end_date = datetime.now(timezone.utc).isoformat()
 
-        # We append a 'Z' or make sure end_date includes the end of the day if it's just YYYY-MM-DD
+        # Ensure end_date covers the full day when only a date (no time) is given
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        # Fetch all matching products in chunks to bypass 1000 limit
-        all_products = []
-        offset = 0
-        chunk_size = 1000
-        
-        while True:
-            chunk_query = (
-                supabase.table('products')
-                .select('*')
-                .gte('discovered_at', start_date)
-                .lte('discovered_at', end_date)
-                .order('discovered_at', desc=True)
-                .range(offset, offset + chunk_size - 1)
-            )
-            chunk_res = chunk_query.execute()
-            data = chunk_res.data
-            all_products.extend(data)
-            if len(data) < chunk_size:
-                break
-            offset += chunk_size
+        # ── First: get the exact total count with a lightweight query ──────────
+        count_query = (
+            supabase.table('products')
+            .select('item_id', count='exact')
+            .eq('is_reviewed', False)
+            .gte('discovered_at', start_date)
+            .lte('discovered_at', end_date)
+            .in_('company_name', tracked_list)
+        )
+        count_res = count_query.execute()
+        total = count_res.count or 0
 
-        filtered = [p for p in all_products if p.get('company_name') in tracked_set and not p.get('is_reviewed') and len(str(p.get('item_id', ''))) >= 13]
-        total = len(filtered)
-        
-        start_idx = (page - 1) * limit
-        end_idx = start_idx + limit
-        paginated_data = filtered[start_idx:end_idx]
-        
+        # ── Then: fetch the requested page ────────────────────────────────────
+        offset = (page - 1) * limit
+        page_query = (
+            supabase.table('products')
+            .select('*')
+            .eq('is_reviewed', False)
+            .gte('discovered_at', start_date)
+            .lte('discovered_at', end_date)
+            .in_('company_name', tracked_list)
+            .order('discovered_at', desc=True)
+            .order('item_id', desc=True)
+            .range(offset, offset + limit - 1)
+        )
+        page_res = page_query.execute()
+        paginated_data = page_res.data or []
+
+        # Client-side guard: drop any product with item_id shorter than 13 chars
+        paginated_data = [p for p in paginated_data if len(str(p.get('item_id', ''))) >= 13]
+
         return {
-            "data": paginated_data, 
-            "total": total, 
+            "data": paginated_data,
+            "total": total,
             "shops": shops_map,
             "page": page,
             "limit": limit
