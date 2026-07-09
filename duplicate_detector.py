@@ -165,6 +165,11 @@ def batch_process_duplicates(products: list, logger=None):
     # Cada hilo analiza un producto independiente sin interferir con los demás
     results = []
     cancelled = False
+    
+    import threading
+    processed_count = 0
+    count_lock = threading.Lock()
+    total_products = len(products)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as prod_executor:
         future_map = {prod_executor.submit(analyze_product, p): p for p in products}
@@ -179,6 +184,11 @@ def batch_process_duplicates(products: list, logger=None):
                 results.append(res_tuple)
             except Exception as e:
                 log(f"  Error procesando producto: {e}")
+            
+            with count_lock:
+                processed_count += 1
+                if processed_count % 50 == 0 or processed_count == total_products:
+                    log(f"  Progreso: analizando imagenes... {processed_count}/{total_products} completados.")
 
     if cancelled:
         return True
