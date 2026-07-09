@@ -41,8 +41,8 @@ def evaluate_duplicate(phash_dist: int) -> tuple:
 
 def batch_process_duplicates(products: list, logger=None):
     """
-    Procesa una lista de productos de forma secuencial.
-    products format: [{'item_id': str, 'main_imgs': list}, ...]
+    Procesa una lista de productos de forma paralela contra un snapshot inmutable
+    de hashes históricos, eliminando por completo las referencias circulares.
     """
     def log(msg):
         if hasattr(logger, 'log'): logger.log(msg)
@@ -50,16 +50,15 @@ def batch_process_duplicates(products: list, logger=None):
 
     if not supabase or not products:
         return
-        
+
     log(f"Iniciando batch processing de {len(products)} productos...")
-    
-    # 1. Carga de hashes existentes (paginado)
+
+    # 1. Cargar snapshot inmutable de hashes históricos (paginado)
     existing_hashes = []
     try:
         log("Cargando hashes existentes desde BD (paginado)...")
         offset = 0
         chunk_size = 1000
-        
         while True:
             res = supabase.table('product_image_hashes').select('item_id, image_url, phash').range(offset, offset + chunk_size - 1).execute()
             data = res.data or []
@@ -71,116 +70,134 @@ def batch_process_duplicates(products: list, logger=None):
     except Exception as e:
         log(f"Error fetching existing hashes: {e}")
         return
-        
+
+    # Snapshot inmutable: cada producto compara contra el mismo estado histórico.
+    # Los hashes de productos de ESTE batch NO se agregan hasta el final,
+    # eliminando por completo las referencias circulares.
+    existing_snapshot = list(existing_hashes)
+    all_new_hashes = []  # Acumulador global de nuevos hashes del batch
+
     def prefetch_hash(url):
-        """Descarga imagen, calcula pHash y devuelve solo la cadena binaria. No guarda la imagen en memoria."""
+        """Descarga imagen, calcula pHash. Libera la imagen inmediatamente."""
         try:
             pil = get_pil_image(url)
             val = imagehash.phash(pil)
             phash_bin = hex_to_bin_str(str(val))
-            pil.close()  # Liberar imagen inmediatamente
+            pil.close()
             return url, phash_bin
         except Exception:
             return url, None
 
-    for p in products:
-        if hasattr(logger, 'is_cancel_requested') and logger.is_cancel_requested():
-            log("Cancelación solicitada. Abortando deduplicación...")
-            return True
-            
+    def analyze_product(p):
+        """Analiza un solo producto contra el snapshot histórico. Thread-safe."""
         item_id = str(p.get('item_id'))
         main_imgs = p.get('main_imgs', [])
-        
-        # Fallback to single thumbnail if full gallery isn't scraped yet
+
         if not main_imgs and p.get('image_url'):
             main_imgs = [p.get('image_url')]
-            
+
         if not main_imgs:
-            continue
-            
-        log(f"  Analizando {item_id}...")
-        
-        best_status = 'DISTINTAS'
-        best_confidence = -999
-        duplicate_of = None
-        
-        new_hashes_data = []
-        
-        # 2. Calcular pHash de las imágenes del producto en paralelo
-        img_data_map = {}  # url -> phash_bin solo (no guardamos PIL en memoria)
+            return item_id, 'DISTINTAS', None, []
+
+        # Calcular pHash de las imágenes del producto (paralelo de descarga)
+        img_data_map = {}
         valid_urls = [u for u in main_imgs if u]
         if valid_urls:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                for url, phash_bin in executor.map(prefetch_hash, valid_urls):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as dl_executor:
+                for url, phash_bin in dl_executor.map(prefetch_hash, valid_urls):
                     if phash_bin:
                         img_data_map[url] = phash_bin
-        
-        # Prepare hashes para insertar en BD
-        new_hashes_data = []
-        for img_url in main_imgs:
-            if img_url in img_data_map:
-                new_hashes_data.append({
-                    'item_id': item_id,
-                    'image_url': img_url,
-                    'phash': img_data_map[img_url]
-                })
 
-        # Escaneo pHash - comparar contra todos los hashes conocidos
+        # Preparar registros de hashes para insertar en BD al final
+        new_hashes_data = [
+            {'item_id': item_id, 'image_url': img_url, 'phash': img_data_map[img_url]}
+            for img_url in main_imgs if img_url in img_data_map
+        ]
+
+        # Comparar contra el snapshot histórico inmutable
+        best_status = 'DISTINTAS'
+        best_confidence = -999.0
+        duplicate_of = None
+
         for img_url in main_imgs:
             if img_url not in img_data_map:
                 continue
-                
             phash_bin = img_data_map[img_url]
-            
-            for ex in existing_hashes:
+
+            for ex in existing_snapshot:
                 if str(ex['item_id']) == item_id:
                     continue
-                    
                 ex_phash = ex.get('phash')
                 if not ex_phash or len(ex_phash) != 64:
                     continue
-                    
                 dist = hamming_distance(phash_bin, ex_phash)
-                
                 if dist <= 5:
                     best_status = 'EXACT'
                     best_confidence = float(100 - dist)
                     duplicate_of = ex['item_id']
                     break
-                    
+
             if best_status == 'EXACT':
                 break
-        
-        # Liberar mapa de imagenes del producto actual de memoria
+
         img_data_map.clear()
-                
-        # 3. Guardar resultados y actualizar BD
+        return item_id, best_status, duplicate_of, new_hashes_data
+
+    # 2. Procesar todos los productos en paralelo (contra snapshot fijo)
+    # Cada hilo analiza un producto independiente sin interferir con los demás
+    results = []
+    cancelled = False
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as prod_executor:
+        future_map = {prod_executor.submit(analyze_product, p): p for p in products}
+        for future in concurrent.futures.as_completed(future_map):
+            if hasattr(logger, 'is_cancel_requested') and logger.is_cancel_requested():
+                log("Cancelación solicitada. Abortando deduplicación...")
+                cancelled = True
+                prod_executor.shutdown(wait=False, cancel_futures=True)
+                break
+            try:
+                item_id, best_status, duplicate_of, new_hashes_data = future.result()
+                results.append((item_id, best_status, duplicate_of, new_hashes_data))
+            except Exception as e:
+                log(f"  Error procesando producto: {e}")
+
+    if cancelled:
+        return True
+
+    # 3. Guardar resultados en BD secuencialmente (sin race conditions)
+    log(f"Guardando resultados de {len(results)} productos...")
+    for item_id, best_status, duplicate_of, new_hashes_data in results:
         if best_status == 'EXACT' and duplicate_of:
-            log(f"    [!] Duplicado (EXACT) encontrado! {item_id} es copia de {duplicate_of} (Confianza: {best_confidence:.1f}%)")
+            log(f"  [!] Duplicado (EXACT): {item_id} es copia de {duplicate_of}")
             try:
                 supabase.table('products').update({
-                    'duplicate_status': best_status,
+                    'duplicate_status': 'EXACT',
                     'duplicate_of_item_id': duplicate_of
                 }).eq('item_id', item_id).execute()
             except Exception as e:
-                log(f"    Error actualizando product: {e}")
+                log(f"  Error actualizando producto {item_id}: {e}")
         else:
             try:
                 supabase.table('products').update({
                     'duplicate_status': 'DISTINTAS'
                 }).eq('item_id', item_id).execute()
-                log(f"    -> Único (DISTINTAS)")
+                log(f"  -> Único (DISTINTAS): {item_id}")
             except Exception as e:
-                log(f"    Error marcando como únicas: {e}")
-                
-        # 4. Insertar nuevos hashes
+                log(f"  Error marcando como único {item_id}: {e}")
+
         if new_hashes_data:
-            try:
-                supabase.table('product_image_hashes').insert(new_hashes_data).execute()
-                # MUY IMPORTANTE: Agregar a existing_hashes en memoria para el siguiente producto del batch
-                existing_hashes.extend(new_hashes_data)
-            except Exception as e:
-                log(f"    Error guardando hashes: {e}")
-                
+            all_new_hashes.extend(new_hashes_data)
+
+    # 4. Insertar todos los nuevos hashes de una sola vez al final
+    if all_new_hashes:
+        try:
+            chunk_size = 500
+            for i in range(0, len(all_new_hashes), chunk_size):
+                supabase.table('product_image_hashes').insert(all_new_hashes[i:i+chunk_size]).execute()
+            log(f"Se guardaron {len(all_new_hashes)} nuevos hashes en BD.")
+        except Exception as e:
+            log(f"Error guardando nuevos hashes: {e}")
+
     log("Batch processing completado.")
     return False
