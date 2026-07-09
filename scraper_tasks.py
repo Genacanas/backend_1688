@@ -28,6 +28,7 @@ class JobLogger:
         self.job_type = job_type
         self.products_found = 0
         self.shops_found = 0
+        self._lock = threading.Lock()
         
         jobs_state[self.job_id] = {
             "status": "running",
@@ -43,9 +44,10 @@ class JobLogger:
         print(f"[{self.job_id}] {message}")
         time_str = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
         log_line = f"[{time_str}] {message}"
-        jobs_state[self.job_id]["logs"].append(log_line)
-        jobs_state[self.job_id]["products_found"] = self.products_found
-        jobs_state[self.job_id]["shops_found"] = self.shops_found
+        with self._lock:
+            jobs_state[self.job_id]["logs"].append(log_line)
+            jobs_state[self.job_id]["products_found"] = self.products_found
+            jobs_state[self.job_id]["shops_found"] = self.shops_found
         
     def update_category_stats(self, category: str, count: int):
         if count > 0:
@@ -57,10 +59,15 @@ class JobLogger:
                 jobs_state[self.job_id]["category_stats"][category] = count
         
         # Update supabase periodically (every 5 logs)
-        if len(jobs_state[self.job_id]["logs"]) % 5 == 0:
+        with self._lock:
+            logs_count = len(jobs_state[self.job_id]["logs"])
+            
+        if logs_count % 5 == 0:
             if supabase:
+                with self._lock:
+                    logs_copy = list(jobs_state[self.job_id]["logs"])
                 supabase.table('scraper_jobs').update({
-                    "logs": jobs_state[self.job_id]["logs"],
+                    "logs": logs_copy,
                     "products_found": self.products_found,
                     "shops_found": self.shops_found
                 }).eq('id', self.job_id).execute()
@@ -156,9 +163,10 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             logger.log(f"  Saving baseline for {len(new_items)} products (skipping deep fetch)...")
         
         insert_data = []
-        for i, item in enumerate(new_items):
+        
+        def process_item(item):
             if logger.is_cancel_requested():
-                break
+                return None
                 
             item_id_prod = str(item.get('item_id', ''))
                 
@@ -166,7 +174,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
             qty = sale_info.get('sale_quantity') or sale_info.get('orders_count_30days')
             
             # Extract deep details
-            english_title = ''  # Only populated from item_detail (not from shop/items which returns Chinese)
+            english_title = ''  
             product_props = []
             main_imgs = [item.get('img', '')]
             
@@ -184,12 +192,10 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                         english_title = det_data.get('title', '')
                         product_props = det_data.get('product_props', [])
                         main_imgs = det_data.get('main_imgs', main_imgs)
-                        
-                    time.sleep(0.06) # Respect rate limits
                 except Exception as e:
                     logger.log(f"  ⚠️ Error getting details for {item_id_prod}: {e}")
             
-            insert_data.append({
+            return {
                 'item_id': item_id_prod,
                 'title': item.get('title', ''), 
                 'english_title': english_title,
@@ -203,26 +209,30 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
                 'product_props': product_props,
                 'main_imgs': main_imgs,
                 'discovered_at': datetime.now(timezone.utc).isoformat()
-            })
-            
-            if (i+1) % 5 == 0:
-                logger.log(f"  ... {i+1}/{len(new_items)} processed")
+            }
+
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(process_item, item) for item in new_items]
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                if logger.is_cancel_requested():
+                    break
+                res = future.result()
+                if res:
+                    insert_data.append(res)
+                if (i+1) % 5 == 0:
+                    logger.log(f"  ... {i+1}/{len(new_items)} processed for {company_name}")
             
         if insert_data:
             response = supabase.table('products').upsert(insert_data, on_conflict='item_id').execute()
             actual_count = len(response.data) if response and response.data else 0
-            logger.products_found += actual_count
+            with logger._lock:
+                logger.products_found += actual_count
             
             if deep_fetch:
                 logger.log(f"  ✓ +{actual_count} products saved with gallery and props.")
             else:
                 logger.log(f"  ✓ +{actual_count} products saved.")
-            
-            # Launch duplicate detection synchronously for the batch
-            products_for_dedup = [d for d in insert_data if d.get('main_imgs')]
-            if products_for_dedup:
-                logger.log(f"  Running batch duplicate detection for {len(products_for_dedup)} products...")
-                batch_process_duplicates(products_for_dedup, logger=logger)
             
     except Exception as e:
         logger.log(f"  ❌ Error extracting products from shop: {e}")
@@ -307,9 +317,8 @@ def run_find_new_shops(job_id: str):
                 
             logger.log(f"¡{len(new_company_names)} new potential shops discovered!")
             
-            for cname in new_company_names:
+            def process_new_shop(cname):
                 if logger.is_cancel_requested():
-                    logger.cancelled()
                     return
                     
                 ref_item_id = shops_in_cat[cname]
@@ -323,7 +332,7 @@ def run_find_new_shops(job_id: str):
                     
                     if not member_id:
                         logger.log(f"  - Could not get member_id, ignoring.")
-                        continue
+                        return
                         
                     supabase.table('shops').upsert({
                         'company_name': cname,
@@ -332,12 +341,20 @@ def run_find_new_shops(job_id: str):
                         'status': 'tracking'
                     }, on_conflict='company_name').execute()
                     
-                    logger.shops_found += 1
+                    with logger._lock:
+                        logger.shops_found += 1
                     
                     fetch_shop_newest_products(member_id, cname, logger)
-                    time.sleep(0.05)
                 except Exception as e:
                     logger.log(f"  ❌ Error processing shop {cname}: {e}")
+                    
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+                futures = [executor.submit(process_new_shop, cname) for cname in new_company_names]
+                for future in concurrent.futures.as_completed(futures):
+                    if logger.is_cancel_requested():
+                        break
+                    future.result()
                     
             cat_shops_found = logger.shops_found - initial_shops_count
             logger.update_category_stats(cat_name, cat_shops_found)
@@ -401,23 +418,27 @@ def run_check_new_products(job_id: str):
             
         logger.log(f"Will audit {len(shops)} shops.")
         
-        for i, shop in enumerate(shops):
+        def process_shop(shop_data, idx, total):
             if logger.is_cancel_requested():
-                logger.cancelled()
                 return
                 
-            company_name = shop['company_name']
-            member_id = shop['member_id']
+            company_name = shop_data['company_name']
+            member_id = shop_data['member_id']
             
-            logger.log(f"[{i+1}/{len(shops)}] Auditing: {company_name}")
-            
+            logger.log(f"[{idx+1}/{total}] Auditing: {company_name}")
             fetch_shop_newest_products(member_id, company_name, logger)
             
             supabase.table('shops').update({
                 'last_checked_products_at': datetime.now(timezone.utc).isoformat()
             }).eq('company_name', company_name).execute()
-            
-            time.sleep(0.05)
+
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            futures = [executor.submit(process_shop, shop_data, i, len(shops)) for i, shop_data in enumerate(shops)]
+            for future in concurrent.futures.as_completed(futures):
+                if logger.is_cancel_requested():
+                    break
+                future.result()
             
         # Auto-run deduplication for any new products found
         run_deduplication_for_new_discoveries(logger)
@@ -447,9 +468,9 @@ def run_deduplication_for_new_discoveries(logger: JobLogger):
             break
         shop_offset += len(s_res.data)
         
-    tracked_set = {s['company_name'] for s in shop_res_all if s.get('company_name')}
+    tracked_list = list({s['company_name'] for s in shop_res_all if s.get('company_name')})
     
-    if not tracked_set:
+    if not tracked_list:
         logger.log("No tracked shops found.")
         return
         
@@ -465,18 +486,19 @@ def run_deduplication_for_new_discoveries(logger: JobLogger):
             
         chunk_query = (
             supabase.table('products')
-            .select('item_id, main_imgs, company_name, image_url')
+            .select('item_id, main_imgs, company_name, image_url, english_title, title')
             .eq('is_reviewed', False)
             .is_('duplicate_status', 'null')
             .gte('discovered_at', '2026-07-03T00:00:00')
+            .in_('company_name', tracked_list)
             .range(offset, offset + chunk_size - 1)
         )
         chunk_res = chunk_query.execute()
         data = chunk_res.data or []
         
-        # Filter in Python for tracked shops and valid ID length
+        # Filter for valid ID length in Python
         for p in data:
-            if p.get('company_name') in tracked_set and len(str(p.get('item_id', ''))) >= 13:
+            if len(str(p.get('item_id', ''))) >= 13:
                 all_products.append(p)
                 
         if not data:
