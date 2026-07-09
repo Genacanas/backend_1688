@@ -460,6 +460,7 @@ def run_deduplication_for_new_discoveries(logger: JobLogger):
             .select('item_id, main_imgs, company_name, image_url')
             .eq('is_reviewed', False)
             .is_('duplicate_status', 'null')
+            .gte('discovered_at', '2026-07-03T00:00:00')
             .range(offset, offset + chunk_size - 1)
         )
         chunk_res = chunk_query.execute()
