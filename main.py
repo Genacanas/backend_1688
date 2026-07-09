@@ -207,7 +207,6 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         # giving a fluctuating total. We sort in Python after the full load.
         all_products = []
         prod_offset = 0
-        chunk_size = 1000
         while True:
             data = (
                 supabase.table('products')
@@ -215,11 +214,11 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
                 .eq('is_reviewed', False)
                 .gte('discovered_at', start_date)
                 .lte('discovered_at', end_date)
-                .range(prod_offset, prod_offset + chunk_size - 1)
+                .range(prod_offset, prod_offset + 999)
                 .execute()
             ).data or []
             all_products.extend(data)
-            if len(data) < chunk_size:
+            if not data:
                 break
             prod_offset += len(data)
 

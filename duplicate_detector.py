@@ -134,8 +134,8 @@ def batch_process_duplicates(products: list, logger=None):
 
         # Comparar contra el snapshot histórico inmutable
         best_status = 'DISTINTAS'
-        best_confidence = -999.0
         duplicate_of = None
+        best_dist = 999
 
         for img_url in main_imgs:
             if img_url not in img_data_map:
@@ -149,14 +149,14 @@ def batch_process_duplicates(products: list, logger=None):
                 if not ex_phash or len(ex_phash) != 64:
                     continue
                 dist = hamming_distance(phash_bin, ex_phash)
-                if dist <= 5:
-                    best_status = 'EXACT_CANDIDATE'
-                    best_confidence = float(100 - dist)
+                if dist < best_dist:
+                    best_dist = dist
                     duplicate_of = ex['item_id']
-                    break
 
-            if best_status == 'EXACT_CANDIDATE':
-                break
+        if best_dist == 0:
+            best_status = 'EXACT_100'
+        elif best_dist <= 8:
+            best_status = 'EXACT_CANDIDATE'
 
         img_data_map.clear()
         return item_id, best_status, duplicate_of, new_hashes_data, p_title
@@ -185,6 +185,7 @@ def batch_process_duplicates(products: list, logger=None):
 
     # 3. Validación Semántica por Text Embeddings
     candidates = [r for r in results if r[1] == 'EXACT_CANDIDATE']
+    existing_embs = {}
     
     if candidates and not openai_client:
         log("[AVISO] No hay OPENAI_API_KEY configurada. Candidatos EXACT serán descartados como DISTINTAS.")
@@ -251,24 +252,44 @@ def batch_process_duplicates(products: list, logger=None):
             except Exception as e:
                 log(f"  Error generando/guardando embeddings: {e}")
 
-        # Validar candidatos con similitud coseno (Umbral 0.82)
-        for i, r in enumerate(results):
-            if r[1] == 'EXACT_CANDIDATE':
-                item_id, status, dup_of, new_hashes, p_title = r
-                emb1 = existing_embs.get(item_id)
-                emb2 = existing_embs.get(dup_of)
-                
-                if emb1 and emb2:
-                    sim = cosine_similarity(emb1, emb2)
-                    if sim >= 0.82:
-                        log(f"  [+] EXACT confirmado (sim: {sim:.3f}): {item_id} -> {dup_of}")
-                        results[i] = (item_id, 'EXACT', dup_of, new_hashes, p_title)
-                    else:
-                        log(f"  [-] EXACT descartado (falso positivo, sim: {sim:.3f}): {item_id} -> {dup_of}")
-                        results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
+    import json
+    
+    # Validar candidatos
+    for i, r in enumerate(results):
+        if r[1] == 'EXACT_100':
+            item_id, status, dup_of, new_hashes, p_title = r
+            log(f"  [+] EXACT confirmado (100% pHash match): {item_id} -> {dup_of}")
+            results[i] = (item_id, 'EXACT', dup_of, new_hashes, p_title)
+        elif r[1] == 'EXACT_CANDIDATE':
+            item_id, status, dup_of, new_hashes, p_title = r
+            
+            # Si no hay cliente de OpenAI, se descartan los candidatos fuzzy
+            if not openai_client:
+                log(f"  [-] EXACT descartado (Sin API de OpenAI): {item_id} -> {dup_of}")
+                results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
+                continue
+            
+            emb1 = existing_embs.get(item_id)
+            emb2 = existing_embs.get(dup_of)
+            
+            if emb1 and isinstance(emb1, str):
+                try: emb1 = json.loads(emb1)
+                except: emb1 = None
+            if emb2 and isinstance(emb2, str):
+                try: emb2 = json.loads(emb2)
+                except: emb2 = None
+            
+            if emb1 and emb2:
+                sim = cosine_similarity(emb1, emb2)
+                if sim >= 0.50:
+                    log(f"  [+] EXACT confirmado (Fuzzy con OpenAI, sim: {sim:.3f}): {item_id} -> {dup_of}")
+                    results[i] = (item_id, 'EXACT', dup_of, new_hashes, p_title)
                 else:
-                    log(f"  [?] EXACT fallido por falta de embedding, descartando: {item_id}")
+                    log(f"  [-] EXACT descartado (falso positivo, sim: {sim:.3f}): {item_id} -> {dup_of}")
                     results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
+            else:
+                log(f"  [?] EXACT fallido por falta de embedding, descartando: {item_id}")
+                results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
 
     # 4. Guardar resultados en BD secuencialmente (sin race conditions)
     log(f"Guardando resultados de {len(results)} productos...")
