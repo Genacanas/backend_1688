@@ -7,11 +7,23 @@ from io import BytesIO
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import concurrent.futures
+import math
+from openai import OpenAI
 
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL else None
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+def cosine_similarity(v1: list, v2: list) -> float:
+    dot_product = sum(a * b for a, b in zip(v1, v2))
+    norm_a = math.sqrt(sum(a * a for a in v1))
+    norm_b = math.sqrt(sum(b * b for b in v2))
+    if norm_a == 0 or norm_b == 0: return 0.0
+    return dot_product / (norm_a * norm_b)
 
 def hex_to_bin_str(hex_str: str) -> str:
     return bin(int(hex_str, 16))[2:].zfill(64)
@@ -92,12 +104,18 @@ def batch_process_duplicates(products: list, logger=None):
         """Analiza un solo producto contra el snapshot histórico. Thread-safe."""
         item_id = str(p.get('item_id'))
         main_imgs = p.get('main_imgs', [])
+        
+        # Obtener el mejor título disponible para el embedding futuro
+        p_title = p.get('english_title')
+        if not p_title or not p_title.strip():
+            p_title = p.get('title')
+        p_title = p_title or "Unknown Product"
 
         if not main_imgs and p.get('image_url'):
             main_imgs = [p.get('image_url')]
 
         if not main_imgs:
-            return item_id, 'DISTINTAS', None, []
+            return item_id, 'DISTINTAS', None, [], p_title
 
         # Calcular pHash de las imágenes del producto (paralelo de descarga)
         img_data_map = {}
@@ -132,16 +150,16 @@ def batch_process_duplicates(products: list, logger=None):
                     continue
                 dist = hamming_distance(phash_bin, ex_phash)
                 if dist <= 5:
-                    best_status = 'EXACT'
+                    best_status = 'EXACT_CANDIDATE'
                     best_confidence = float(100 - dist)
                     duplicate_of = ex['item_id']
                     break
 
-            if best_status == 'EXACT':
+            if best_status == 'EXACT_CANDIDATE':
                 break
 
         img_data_map.clear()
-        return item_id, best_status, duplicate_of, new_hashes_data
+        return item_id, best_status, duplicate_of, new_hashes_data, p_title
 
     # 2. Procesar todos los productos en paralelo (contra snapshot fijo)
     # Cada hilo analiza un producto independiente sin interferir con los demás
@@ -157,17 +175,112 @@ def batch_process_duplicates(products: list, logger=None):
                 prod_executor.shutdown(wait=False, cancel_futures=True)
                 break
             try:
-                item_id, best_status, duplicate_of, new_hashes_data = future.result()
-                results.append((item_id, best_status, duplicate_of, new_hashes_data))
+                res_tuple = future.result()
+                results.append(res_tuple)
             except Exception as e:
                 log(f"  Error procesando producto: {e}")
 
     if cancelled:
         return True
 
-    # 3. Guardar resultados en BD secuencialmente (sin race conditions)
+    # 3. Validación Semántica por Text Embeddings
+    candidates = [r for r in results if r[1] == 'EXACT_CANDIDATE']
+    
+    if candidates and not openai_client:
+        log("[AVISO] No hay OPENAI_API_KEY configurada. Candidatos EXACT serán descartados como DISTINTAS.")
+    
+    if candidates and openai_client:
+        log(f"Validación semántica para {len(candidates)} candidatos EXACT...")
+        items_needing_embs = set()
+        for r in candidates:
+            items_needing_embs.add(r[0]) # El nuevo
+            items_needing_embs.add(r[2]) # El histórico (duplicate_of)
+            
+        # Buscar embeddings existentes en BD
+        existing_embs = {}
+        try:
+            res = supabase.table('product_embeddings').select('item_id, embedding').in_('item_id', list(items_needing_embs)).execute()
+            existing_embs = {str(row['item_id']): row['embedding'] for row in res.data or []}
+        except Exception as e:
+            log(f"  Error fetching existing embeddings: {e}")
+
+        # Determinar cuáles faltan
+        missing_items = items_needing_embs - set(existing_embs.keys())
+        if missing_items:
+            log(f"  Generando {len(missing_items)} embeddings faltantes por API...")
+            missing_titles = {}
+            # Primero buscamos en los productos actuales del batch
+            for r in results:
+                if r[0] in missing_items:
+                    missing_titles[r[0]] = r[4] # r[4] es p_title
+            
+            # Los que aún faltan deben ser históricos, buscamos sus títulos en BD
+            historical_missing = missing_items - set(missing_titles.keys())
+            if historical_missing:
+                try:
+                    res = supabase.table('products').select('item_id, english_title, title').in_('item_id', list(historical_missing)).execute()
+                    for row in res.data or []:
+                        t = row.get('english_title')
+                        if not t or not t.strip():
+                            t = row.get('title')
+                        missing_titles[str(row['item_id'])] = t or "Unknown Product"
+                except Exception as e:
+                    log(f"  Error fetching historical titles: {e}")
+                    for hm in historical_missing:
+                        missing_titles[hm] = "Unknown Product"
+            
+            # Generar por API en batch — usar lista ordenada para garantizar alineación con zip
+            missing_items_list = list(missing_items)
+            try:
+                texts = [missing_titles.get(i, "Unknown Product") for i in missing_items_list]
+                emb_res = openai_client.embeddings.create(input=texts, model="text-embedding-3-small")
+                
+                new_emb_records = []
+                for item_id_emb, data in zip(missing_items_list, emb_res.data):
+                    existing_embs[item_id_emb] = data.embedding
+                    new_emb_records.append({
+                        'item_id': item_id_emb,
+                        'title': missing_titles.get(item_id_emb, "Unknown Product"),
+                        'embedding': data.embedding
+                    })
+                
+                # Guardar los nuevos embeddings para el futuro
+                if new_emb_records:
+                    supabase.table('product_embeddings').upsert(new_emb_records).execute()
+                    log(f"  Guardados {len(new_emb_records)} nuevos embeddings en BD.")
+            except Exception as e:
+                log(f"  Error generando/guardando embeddings: {e}")
+
+        # Validar candidatos con similitud coseno (Umbral 0.82)
+        for i, r in enumerate(results):
+            if r[1] == 'EXACT_CANDIDATE':
+                item_id, status, dup_of, new_hashes, p_title = r
+                emb1 = existing_embs.get(item_id)
+                emb2 = existing_embs.get(dup_of)
+                
+                if emb1 and emb2:
+                    sim = cosine_similarity(emb1, emb2)
+                    if sim >= 0.82:
+                        log(f"  [+] EXACT confirmado (sim: {sim:.3f}): {item_id} -> {dup_of}")
+                        results[i] = (item_id, 'EXACT', dup_of, new_hashes, p_title)
+                    else:
+                        log(f"  [-] EXACT descartado (falso positivo, sim: {sim:.3f}): {item_id} -> {dup_of}")
+                        results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
+                else:
+                    log(f"  [?] EXACT fallido por falta de embedding, descartando: {item_id}")
+                    results[i] = (item_id, 'DISTINTAS', None, new_hashes, p_title)
+
+    # 4. Guardar resultados en BD secuencialmente (sin race conditions)
     log(f"Guardando resultados de {len(results)} productos...")
-    for item_id, best_status, duplicate_of, new_hashes_data in results:
+    for r in results:
+        item_id = r[0]
+        best_status = r[1]
+        duplicate_of = r[2]
+        new_hashes_data = r[3]
+        
+        # Ignorar si por error quedó como candidato
+        if best_status == 'EXACT_CANDIDATE':
+            best_status = 'DISTINTAS'
         if best_status == 'EXACT' and duplicate_of:
             log(f"  [!] Duplicado (EXACT): {item_id} es copia de {duplicate_of}")
             try:
@@ -189,7 +302,7 @@ def batch_process_duplicates(products: list, logger=None):
         if new_hashes_data:
             all_new_hashes.extend(new_hashes_data)
 
-    # 4. Insertar todos los nuevos hashes de una sola vez al final
+    # 5. Insertar todos los nuevos hashes de una sola vez al final
     if all_new_hashes:
         try:
             chunk_size = 500
