@@ -173,23 +173,18 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        # Fetch tracked shop names and details in chunks
-        tracked_shops = []
+        # Build shop details map for the UI (company_name -> shop info)
+        shops_map = {}
         shop_offset = 0
-        shop_chunk = 1000
         while True:
-            chunk_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').range(shop_offset, shop_offset + shop_chunk - 1).execute()
-            data = chunk_res.data
-            tracked_shops.extend(data)
+            chunk_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').range(shop_offset, shop_offset + 999).execute()
+            data = chunk_res.data or []
+            for s in data:
+                if s.get('company_name'):
+                    shops_map[s['company_name']] = s
             if not data:
                 break
             shop_offset += len(data)
-            
-        tracked_list = [s['company_name'] for s in tracked_shops if s.get('company_name')]
-        shops_map = {s['company_name']: s for s in tracked_shops if s.get('company_name')}
-
-        if not tracked_list:
-            return {"data": [], "total": 0, "shops": {}, "page": page, "limit": limit}
 
         # Fallback to last 3 days if not provided
         if not start_date:
@@ -201,42 +196,32 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        # ── PostgREST has a URL length limit; batch the .in_() in chunks of 100 ─
-        CHUNK_SIZE = 100
+        # The scraper only ever saves products from tracked shops, so no
+        # company_name filter is needed — all products in DB are from tracked shops.
+        # We use DB-level count + pagination to avoid loading everything into memory.
 
-        def make_base(select_cols: str, name_chunk: list):
-            return (
-                supabase.table('products')
-                .select(select_cols, count='exact')
-                .eq('is_reviewed', False)
-                .gte('discovered_at', start_date)
-                .lte('discovered_at', end_date)
-                .in_('company_name', name_chunk)
-            )
+        base = (
+            supabase.table('products')
+            .eq('is_reviewed', False)
+            .gte('discovered_at', start_date)
+            .lte('discovered_at', end_date)
+        )
 
-        # ── 1. Exact total count: sum across all chunks ────────────────────────
-        total = 0
-        for i in range(0, len(tracked_list), CHUNK_SIZE):
-            res = make_base('item_id', tracked_list[i:i + CHUNK_SIZE]).execute()
-            total += res.count or 0
+        # Exact count via lightweight select
+        count_res = base.select('item_id', count='exact').execute()
+        total = count_res.count or 0
 
-        # ── 2. Collect all matching products across chunks, then paginate ──────
-        all_items = []
-        for i in range(0, len(tracked_list), CHUNK_SIZE):
-            res = (
-                make_base('*', tracked_list[i:i + CHUNK_SIZE])
-                .order('discovered_at', desc=True)
-                .order('item_id', desc=True)
-                .execute()
-            )
-            all_items.extend(res.data or [])
-
-        # Sort combined results deterministically and apply pagination in Python
-        all_items.sort(key=lambda p: (p.get('discovered_at', ''), p.get('item_id', '')), reverse=True)
-        all_items = [p for p in all_items if len(str(p.get('item_id', ''))) >= 13]
-
+        # Paginated data
         offset = (page - 1) * limit
-        paginated_data = all_items[offset:offset + limit]
+        page_res = (
+            base
+            .select('*')
+            .order('discovered_at', desc=True)
+            .order('item_id', desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        paginated_data = [p for p in (page_res.data or []) if len(str(p.get('item_id', ''))) >= 13]
 
         return {
             "data": paginated_data,
