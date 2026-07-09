@@ -201,36 +201,42 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        # ── First: get the exact total count with a lightweight query ──────────
-        count_query = (
-            supabase.table('products')
-            .select('item_id', count='exact')
-            .eq('is_reviewed', False)
-            .gte('discovered_at', start_date)
-            .lte('discovered_at', end_date)
-            .in_('company_name', tracked_list)
-        )
-        count_res = count_query.execute()
-        total = count_res.count or 0
+        # ── PostgREST has a URL length limit; batch the .in_() in chunks of 100 ─
+        CHUNK_SIZE = 100
 
-        # ── Then: fetch the requested page ────────────────────────────────────
+        def make_base(select_cols: str, name_chunk: list):
+            return (
+                supabase.table('products')
+                .select(select_cols, count='exact')
+                .eq('is_reviewed', False)
+                .gte('discovered_at', start_date)
+                .lte('discovered_at', end_date)
+                .in_('company_name', name_chunk)
+            )
+
+        # ── 1. Exact total count: sum across all chunks ────────────────────────
+        total = 0
+        for i in range(0, len(tracked_list), CHUNK_SIZE):
+            res = make_base('item_id', tracked_list[i:i + CHUNK_SIZE]).execute()
+            total += res.count or 0
+
+        # ── 2. Collect all matching products across chunks, then paginate ──────
+        all_items = []
+        for i in range(0, len(tracked_list), CHUNK_SIZE):
+            res = (
+                make_base('*', tracked_list[i:i + CHUNK_SIZE])
+                .order('discovered_at', desc=True)
+                .order('item_id', desc=True)
+                .execute()
+            )
+            all_items.extend(res.data or [])
+
+        # Sort combined results deterministically and apply pagination in Python
+        all_items.sort(key=lambda p: (p.get('discovered_at', ''), p.get('item_id', '')), reverse=True)
+        all_items = [p for p in all_items if len(str(p.get('item_id', ''))) >= 13]
+
         offset = (page - 1) * limit
-        page_query = (
-            supabase.table('products')
-            .select('*')
-            .eq('is_reviewed', False)
-            .gte('discovered_at', start_date)
-            .lte('discovered_at', end_date)
-            .in_('company_name', tracked_list)
-            .order('discovered_at', desc=True)
-            .order('item_id', desc=True)
-            .range(offset, offset + limit - 1)
-        )
-        page_res = page_query.execute()
-        paginated_data = page_res.data or []
-
-        # Client-side guard: drop any product with item_id shorter than 13 chars
-        paginated_data = [p for p in paginated_data if len(str(p.get('item_id', ''))) >= 13]
+        paginated_data = all_items[offset:offset + limit]
 
         return {
             "data": paginated_data,
