@@ -438,8 +438,16 @@ def run_deduplication_for_new_discoveries(logger: JobLogger):
         return
 
     logger.log("Fetching tracked shops...")
-    shop_res = supabase.table('shops').select('company_name').eq('status', 'tracking').execute()
-    tracked_set = {s['company_name'] for s in shop_res.data if s.get('company_name')}
+    shop_res_all = []
+    shop_offset = 0
+    while True:
+        s_res = supabase.table('shops').select('company_name').eq('status', 'tracking').range(shop_offset, shop_offset + 999).execute()
+        shop_res_all.extend(s_res.data or [])
+        if not s_res.data:
+            break
+        shop_offset += len(s_res.data)
+        
+    tracked_set = {s['company_name'] for s in shop_res_all if s.get('company_name')}
     
     if not tracked_set:
         logger.log("No tracked shops found.")
