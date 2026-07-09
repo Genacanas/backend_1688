@@ -350,6 +350,10 @@ def run_find_new_shops(job_id: str):
             for cat, count in stats.items():
                 logger.log(f"{cat}: {count} new shops")
         logger.log("----------------------------")
+        
+        # Auto-run deduplication for any new products found
+        run_deduplication_for_new_discoveries(logger)
+        
         logger.log("✅ Find New Shops process completed successfully.")
         logger.done()
         
@@ -415,6 +419,9 @@ def run_check_new_products(job_id: str):
             
             time.sleep(0.05)
             
+        # Auto-run deduplication for any new products found
+        run_deduplication_for_new_discoveries(logger)
+            
         logger.log("✅ Check New Products process completed successfully.")
         logger.done()
     except Exception as e:
@@ -423,67 +430,68 @@ def run_check_new_products(job_id: str):
 # ==========================================
 # UNIFIED PROCESS: Manual Deduplication
 # ==========================================
-def run_manual_deduplication_job(job_id: str):
-    logger = JobLogger(job_id, "manual_deduplication")
-    logger.log("Starting process: Manual Deduplication for New Discoveries...")
-    
-    try:
-        if not supabase:
-            logger.error("Supabase not configured.")
-            return
+def run_deduplication_for_new_discoveries(logger: JobLogger):
+    """Ejecuta la deduplicación sobre todos los productos no revisados de tiendas en tracking."""
+    logger.log("Starting process: Deduplication for New Discoveries...")
+    if not supabase:
+        logger.error("Supabase not configured.")
+        return
 
-        logger.log("Fetching tracked shops...")
-        shop_res = supabase.table('shops').select('company_name').eq('status', 'tracking').execute()
-        tracked_set = {s['company_name'] for s in shop_res.data if s.get('company_name')}
+    logger.log("Fetching tracked shops...")
+    shop_res = supabase.table('shops').select('company_name').eq('status', 'tracking').execute()
+    tracked_set = {s['company_name'] for s in shop_res.data if s.get('company_name')}
+    
+    if not tracked_set:
+        logger.log("No tracked shops found.")
+        return
         
-        if not tracked_set:
-            logger.log("No tracked shops found.")
-            logger.done()
-            return
-            
-        logger.log("Fetching pending New Discoveries...")
-        all_products = []
-        offset = 0
-        chunk_size = 1000
-        
-        while True:
-            if logger.is_cancel_requested():
-                logger.cancelled()
-                return
-                
-            chunk_query = (
-                supabase.table('products')
-                .select('item_id, main_imgs, company_name')
-                .eq('is_reviewed', False)
-                .is_('duplicate_status', 'null')
-                .range(offset, offset + chunk_size - 1)
-            )
-            chunk_res = chunk_query.execute()
-            data = chunk_res.data
-            
-            # Filter in Python for tracked shops and valid ID length
-            for p in data:
-                if p.get('company_name') in tracked_set and len(str(p.get('item_id', ''))) >= 13:
-                    all_products.append(p)
-                    
-            if len(data) < chunk_size:
-                break
-            offset += chunk_size
-            
-        if not all_products:
-            logger.log("No pending products found to deduplicate.")
-            logger.done()
-            return
-            
-        logger.log(f"Found {len(all_products)} products. Starting batch process...")
-        was_cancelled = batch_process_duplicates(all_products, logger=logger)
-        
-        if was_cancelled:
+    logger.log("Fetching pending New Discoveries...")
+    all_products = []
+    offset = 0
+    chunk_size = 1000
+    
+    while True:
+        if logger.is_cancel_requested():
             logger.cancelled()
             return
             
-        logger.log("✅ Manual Deduplication completed successfully.")
-        logger.done()
+        chunk_query = (
+            supabase.table('products')
+            .select('item_id, main_imgs, company_name, image_url')
+            .eq('is_reviewed', False)
+            .is_('duplicate_status', 'null')
+            .range(offset, offset + chunk_size - 1)
+        )
+        chunk_res = chunk_query.execute()
+        data = chunk_res.data or []
         
+        # Filter in Python for tracked shops and valid ID length
+        for p in data:
+            if p.get('company_name') in tracked_set and len(str(p.get('item_id', ''))) >= 13:
+                all_products.append(p)
+                
+        if not data:
+            break
+        offset += len(data)
+        
+    if not all_products:
+        logger.log("No pending products found to deduplicate.")
+        return
+        
+    logger.log(f"Found {len(all_products)} products. Starting batch process...")
+    was_cancelled = batch_process_duplicates(all_products, logger=logger)
+    
+    if was_cancelled:
+        logger.cancelled()
+        return
+
+def run_manual_deduplication_job(job_id: str):
+    logger = JobLogger(job_id, "manual_deduplication")
+    try:
+        run_deduplication_for_new_discoveries(logger)
+        
+        if not logger.is_cancel_requested():
+            logger.log("✅ Manual Deduplication completed successfully.")
+            logger.done()
     except Exception as e:
         logger.error(str(e))
