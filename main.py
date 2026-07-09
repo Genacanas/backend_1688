@@ -196,25 +196,25 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        # The scraper only ever saves products from tracked shops, so no
-        # company_name filter is needed — all products in DB are from tracked shops.
-        # We use DB-level count + pagination to avoid loading everything into memory.
+        # The scraper only ever saves products from tracked shops, but shops can
+        # be un-tracked after the fact. We use a Supabase view (new_discoveries_view)
+        # that does an INNER JOIN with shops WHERE status='tracking' AND is_reviewed=FALSE,
+        # so we get perfect filtering without URL length issues from large .in_() lists.
 
-        base = (
-            supabase.table('products')
-            .eq('is_reviewed', False)
+        base_view = (
+            supabase.table('new_discoveries_view')
             .gte('discovered_at', start_date)
             .lte('discovered_at', end_date)
         )
 
         # Exact count via lightweight select
-        count_res = base.select('item_id', count='exact').execute()
+        count_res = base_view.select('item_id', count='exact').execute()
         total = count_res.count or 0
 
         # Paginated data
         offset = (page - 1) * limit
         page_res = (
-            base
+            base_view
             .select('*')
             .order('discovered_at', desc=True)
             .order('item_id', desc=True)
