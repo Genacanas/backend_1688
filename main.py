@@ -173,18 +173,22 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        # Build shop details map for the UI (company_name -> shop info)
-        shops_map = {}
+        # Load tracked shops (for company_name filter + UI shop details)
+        tracked_shops = []
         shop_offset = 0
         while True:
             chunk_res = supabase.table('shops').select('company_name,shop_url,composite_score,shop_years').eq('status', 'tracking').range(shop_offset, shop_offset + 999).execute()
             data = chunk_res.data or []
-            for s in data:
-                if s.get('company_name'):
-                    shops_map[s['company_name']] = s
+            tracked_shops.extend(data)
             if not data:
                 break
             shop_offset += len(data)
+
+        tracked_set = {s['company_name'] for s in tracked_shops if s.get('company_name')}
+        shops_map  = {s['company_name']: s  for s in tracked_shops if s.get('company_name')}
+
+        if not tracked_set:
+            return {"data": [], "total": 0, "shops": {}, "page": page, "limit": limit}
 
         # Fallback to last 3 days if not provided
         if not start_date:
@@ -196,32 +200,41 @@ def get_new_discoveries(start_date: Optional[str] = None, end_date: Optional[str
         if len(end_date) == 10:  # YYYY-MM-DD
             end_date += "T23:59:59.999Z"
 
-        # The scraper only ever saves products from tracked shops, but shops can
-        # be un-tracked after the fact. We use a Supabase view (new_discoveries_view)
-        # that does an INNER JOIN with shops WHERE status='tracking' AND is_reviewed=FALSE,
-        # so we get perfect filtering without URL length issues from large .in_() lists.
+        # Load all unreviewed products in the date range in chunks.
+        # KEY FIX: is_reviewed=False filtered in SQL (stable, not in Python).
+        # NO ORDER BY during loading: ordering by text item_id caused unstable
+        # page boundaries making the same row appear in two chunks or none,
+        # giving a fluctuating total. We sort in Python after the full load.
+        all_products = []
+        prod_offset = 0
+        chunk_size = 1000
+        while True:
+            data = (
+                supabase.table('products')
+                .select('*')
+                .eq('is_reviewed', False)
+                .gte('discovered_at', start_date)
+                .lte('discovered_at', end_date)
+                .range(prod_offset, prod_offset + chunk_size - 1)
+                .execute()
+            ).data or []
+            all_products.extend(data)
+            if len(data) < chunk_size:
+                break
+            prod_offset += len(data)
 
-        base_view = (
-            supabase.table('new_discoveries_view')
-            .gte('discovered_at', start_date)
-            .lte('discovered_at', end_date)
-        )
+        # Filter by tracked shops and valid item_id length in Python
+        filtered = [
+            p for p in all_products
+            if p.get('company_name') in tracked_set
+            and len(str(p.get('item_id', ''))) >= 13
+        ]
+        total = len(filtered)
 
-        # Exact count via lightweight select
-        count_res = base_view.select('item_id', count='exact').execute()
-        total = count_res.count or 0
-
-        # Paginated data
-        offset = (page - 1) * limit
-        page_res = (
-            base_view
-            .select('*')
-            .order('discovered_at', desc=True)
-            .order('item_id', desc=True)
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-        paginated_data = [p for p in (page_res.data or []) if len(str(p.get('item_id', ''))) >= 13]
+        # Sort deterministically in Python, then paginate
+        filtered.sort(key=lambda p: (p.get('discovered_at', ''), p.get('item_id', '')), reverse=True)
+        start_idx = (page - 1) * limit
+        paginated_data = filtered[start_idx:start_idx + limit]
 
         return {
             "data": paginated_data,
