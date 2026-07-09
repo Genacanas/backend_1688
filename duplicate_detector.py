@@ -7,7 +7,6 @@ from io import BytesIO
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import concurrent.futures
-from functools import lru_cache
 
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -20,7 +19,6 @@ def hex_to_bin_str(hex_str: str) -> str:
 def hamming_distance(bin_str1: str, bin_str2: str) -> int:
     return sum(c1 != c2 for c1, c2 in zip(bin_str1, bin_str2))
 
-@lru_cache(maxsize=2000)
 def get_pil_image(url: str):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -33,16 +31,13 @@ def get_pil_image(url: str):
 def evaluate_duplicate(phash_dist: int) -> tuple:
     """
     Evalúa si dos imágenes son duplicadas basado en la distancia pHash.
-    Retorna (status, confidence) donde status es 'EXACT', 'DOUBTFUL' o 'DISTINTAS'.
+    Retorna (status, confidence) donde status es 'EXACT' o 'DISTINTAS'.
     """
     if phash_dist <= 5:
         confidence = float(100 - (phash_dist * 2))
-        return 'EXACT', max(0, confidence)
-    elif phash_dist <= 10:
-        confidence = float(100 - (phash_dist * 8))
-        return 'DOUBTFUL', max(0, confidence)
+        return 'EXACT', max(0.0, confidence)
     else:
-        return 'DISTINTAS', confidence
+        return 'DISTINTAS', 0.0
 
 def batch_process_duplicates(products: list, logger=None):
     """
@@ -78,12 +73,15 @@ def batch_process_duplicates(products: list, logger=None):
         return
         
     def prefetch_hash(url):
+        """Descarga imagen, calcula pHash y devuelve solo la cadena binaria. No guarda la imagen en memoria."""
         try:
             pil = get_pil_image(url)
             val = imagehash.phash(pil)
-            return url, hex_to_bin_str(str(val)), pil
+            phash_bin = hex_to_bin_str(str(val))
+            pil.close()  # Liberar imagen inmediatamente
+            return url, phash_bin
         except Exception:
-            return url, None, None
+            return url, None
 
     for p in products:
         if hasattr(logger, 'is_cancel_requested') and logger.is_cancel_requested():
@@ -108,34 +106,32 @@ def batch_process_duplicates(products: list, logger=None):
         
         new_hashes_data = []
         
-        # 2. Pre-descargar y hashear las imágenes del producto en paralelo
-        img_data_map = {}
+        # 2. Calcular pHash de las imágenes del producto en paralelo
+        img_data_map = {}  # url -> phash_bin solo (no guardamos PIL en memoria)
         valid_urls = [u for u in main_imgs if u]
         if valid_urls:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-                for url, phash_bin, pil_img in executor.map(prefetch_hash, valid_urls):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                for url, phash_bin in executor.map(prefetch_hash, valid_urls):
                     if phash_bin:
-                        img_data_map[url] = (phash_bin, pil_img)
+                        img_data_map[url] = phash_bin
         
-        # Prepare hashes
+        # Prepare hashes para insertar en BD
+        new_hashes_data = []
         for img_url in main_imgs:
             if img_url in img_data_map:
                 new_hashes_data.append({
                     'item_id': item_id,
                     'image_url': img_url,
-                    'phash': img_data_map[img_url][0]
+                    'phash': img_data_map[img_url]
                 })
 
-        # Fase 1: Escaneo Rápido pHash (Two-Pass Scanning)
-        doubtful_queue = []
-        
+        # Escaneo pHash - comparar contra todos los hashes conocidos
         for img_url in main_imgs:
             if img_url not in img_data_map:
                 continue
                 
-            phash_bin, img_pil = img_data_map[img_url]
+            phash_bin = img_data_map[img_url]
             
-            # Comparar contra todos los hashes conocidos
             for ex in existing_hashes:
                 if str(ex['item_id']) == item_id:
                     continue
@@ -154,6 +150,9 @@ def batch_process_duplicates(products: list, logger=None):
                     
             if best_status == 'EXACT':
                 break
+        
+        # Liberar mapa de imagenes del producto actual de memoria
+        img_data_map.clear()
                 
         # 3. Guardar resultados y actualizar BD
         if best_status == 'EXACT' and duplicate_of:
