@@ -510,8 +510,19 @@ def get_shop_products_from_tmapi(company_name: str, page: int = 1, limit: int = 
         tmapi_res.raise_for_status()
         data = tmapi_res.json()
         
-        raw_items = data.get('data', [])
-        total = data.get('total', 0)
+        tmapi_data = data.get('data')
+        if not isinstance(tmapi_data, dict):
+            tmapi_data = {}
+            
+        raw_items = tmapi_data.get('items')
+        if not isinstance(raw_items, list):
+            raw_items = []
+            
+        total_count_str = tmapi_data.get('total_count')
+        try:
+            total = int(total_count_str) if total_count_str else (page * limit + 1 if len(raw_items) == limit else page * limit)
+        except (ValueError, TypeError):
+            total = page * limit
         
         # 3. Map to standard ProductCard format
         mapped_items = []
