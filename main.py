@@ -291,6 +291,17 @@ def update_product_potential(item_id: str, update: ProductPotentialUpdate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/products/tags/summary")
+def get_tags_summary():
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').select('tag').neq('tag', 'null').execute()
+        tags = list(set([r['tag'] for r in response.data if r.get('tag')]))
+        return {"success": True, "data": tags}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/products/tags/delete")
 def delete_product_tag(update: ProductTagDelete):
     if not supabase:
