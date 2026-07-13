@@ -101,6 +101,8 @@ class FindNewShopsParams(BaseModel):
 
 @app.post("/api/jobs/find-new-shops")
 def start_find_new_shops(params: FindNewShopsParams, background_tasks: BackgroundTasks):
+    if params.start_page < 1 or params.end_page < 1:
+        raise HTTPException(status_code=400, detail="Page numbers must be 1 or greater.")
     if params.end_page < params.start_page:
         raise HTTPException(status_code=400, detail="End page must be greater than or equal to start page.")
         
