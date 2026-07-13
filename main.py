@@ -533,7 +533,7 @@ def get_shop_products_from_tmapi(company_name: str, page: int = 1, limit: int = 
                 "english_title": p.get("title", ""),
                 "price": float(p.get("price", 0) or 0),
                 "sales": int(p.get("sales", 0) or 0),
-                "image_url": p.get("pic_url", ""),
+                "image_url": p.get("img", ""),
                 "product_url": p.get("detail_url", ""),
                 "company_name": company_name,
                 "moq": p.get("moq", 1)
