@@ -567,6 +567,63 @@ Product Properties:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
 
+@app.post("/api/products/{item_id}/category-detect")
+def detect_product_category(item_id: str):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    
+    # 1. Fetch product from DB
+    res = supabase.table('products').select('english_title, ai_summary, product_props').eq('item_id', item_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = res.data[0]
+    eng_title = product.get('english_title', '')
+    summary = product.get('ai_summary', '')
+    props = product.get('product_props', [])
+    
+    # 2. Download clean categories
+    try:
+        cat_url = "https://pxocbrhjycclrqklbvrl.supabase.co/storage/v1/object/public/config/categories_clean.json"
+        cat_res = requests.get(cat_url, timeout=10)
+        cat_res.raise_for_status()
+        categories_json_str = cat_res.text
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error downloading categories: {str(e)}")
+
+    # 3. Call OpenAI
+    if not OPENAI_API_KEY:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not found")
+        
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    
+    system_prompt = f"""Eres un experto en clasificación e-commerce. Tu única tarea es clasificar el producto en una de las categorías provistas. Debes retornar ÚNICA Y EXCLUSIVAMENTE la ruta completa separada por ' > ' (ej: 'Agriculture > Agricultural Product Agency/Franchise'). NO inventes categorías. NO agregues comillas ni otro texto.
+
+Categorías:
+{categories_json_str}
+"""
+
+    user_prompt = f"Title: {eng_title}\nSummary: {summary}\nProps: {json.dumps(props, indent=2) if props else '[]'}"
+
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.0
+        )
+        category_string = completion.choices[0].message.content.strip()
+        
+        # 4. Update product in DB
+        supabase.table('products').update({"category": category_string}).eq('item_id', item_id).execute()
+        
+        return {"success": True, "category": category_string}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
