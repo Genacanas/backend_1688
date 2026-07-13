@@ -101,6 +101,9 @@ class FindNewShopsParams(BaseModel):
 
 @app.post("/api/jobs/find-new-shops")
 def start_find_new_shops(params: FindNewShopsParams, background_tasks: BackgroundTasks):
+    if params.end_page < params.start_page:
+        raise HTTPException(status_code=400, detail="End page must be greater than or equal to start page.")
+        
     job_id = create_job_record("find_new_shops")
     background_tasks.add_task(scraper_tasks.run_find_new_shops, job_id, params.start_page, params.end_page)
     return {"job_id": job_id, "message": "Job started"}
