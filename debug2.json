@@ -1,0 +1,242 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "item_id": 1048283743663,
+    "product_url": "https://detail.1688.com/offer/1048283743663.html",
+    "title": "免抽气真空压缩袋加厚收纳衣物棉被装衣服被子羽绒服袋压抽气式",
+    "category_id": 1036898,
+    "root_category_id": 201547901,
+    "currency": "CNY",
+    "offer_unit": "件",
+    "product_props": [
+      {
+        "材质": "PA+PE材质"
+      },
+      {
+        "品牌": "其他"
+      },
+      {
+        "有无泵": "无"
+      },
+      {
+        "压缩形式": "袋压抽气式"
+      },
+      {
+        "是否进口": "否"
+      },
+      {
+        "型号": "YM-6629891"
+      },
+      {
+        "产地": "义乌"
+      },
+      {
+        "箱装数量": "200"
+      },
+      {
+        "产品上市时间": "2026年春"
+      },
+      {
+        "价格段": "5-10元"
+      },
+      {
+        "货号": "ZKSND00"
+      },
+      {
+        "颜色": "全透明"
+      },
+      {
+        "尺寸": "50*70;60*80;80*100"
+      },
+      {
+        "主要下游平台": "ebay;亚马逊;wish;速卖通;独立站;LAZADA"
+      },
+      {
+        "主要销售地区": "非洲;欧洲;南美;东南亚;北美;东北亚;中东"
+      },
+      {
+        "有可授权的自有品牌": "否"
+      },
+      {
+        "是否跨境出口专供货源": "是"
+      },
+      {
+        "是否有专利": "否"
+      },
+      {
+        "版权": "无"
+      },
+      {
+        "单层厚度": "6丝"
+      }
+    ],
+    "main_imgs": [
+      "https://cbu01.alicdn.com/img/ibank/O1CN01Sd9ynY1H2BzN4goZQ_!!2222427760699-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN010JBz911H2BzNaxdtd_!!2222427760699-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01W6dQn31H2BzNw38xT_!!2222427760699-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01ohLfZ71H2BzNiJBW9_!!2222427760699-0-cib.jpg",
+      "https://cbu01.alicdn.com/img/ibank/O1CN01Ck6zij1H2BzNJnJOO_!!2222427760699-0-cib.jpg"
+    ],
+    "video_url": "https://cloud.video.taobao.com/play/u/2222427760699/p/2/e/6/t/1/564015609327.mp4",
+    "detail_url": "https://itemcdn.tmall.com/1688offer/icoss37676821592302174aa2ed973f",
+    "sale_count": "0",
+    "sale_info": {
+      "sale_quantity_90days": 0
+    },
+    "price_info": {
+      "price": "1.60",
+      "price_min": "1.60",
+      "price_max": "2.70",
+      "origin_price_min": "1.60",
+      "origin_price_max": "2.70",
+      "discount_price": ""
+    },
+    "tiered_price_info": {
+      "begin_num": 1,
+      "prices": []
+    },
+    "mixed_batch": {
+      "mix_amount": 50,
+      "mix_begin": 0,
+      "mix_num": 5
+    },
+    "shop_info": {
+      "shop_name": "义乌市恒航日用品有限公司",
+      "shop_url": "https://winport.m.1688.com/page/index.html?memberId=b2b-2222427760699f4db9",
+      "seller_login_id": "恒航日用品",
+      "seller_user_id": "2222427760699",
+      "seller_member_id": "b2b-2222427760699f4db9"
+    },
+    "delivery_info": {
+      "location": "浙江省金华市",
+      "location_code": "959938391",
+      "delivery_fee": 3.0,
+      "unit_weight": 0,
+      "template_id": "573155757"
+    },
+    "service_tags": [
+      "退货包运费",
+      "晚发必赔",
+      "极速退款"
+    ],
+    "sku_price_scale": "",
+    "sku_price_scale_original": "",
+    "sku_price_range": {},
+    "sku_props": [
+      {
+        "pid": "0",
+        "prop_name": "颜色",
+        "values": [
+          {
+            "vid": "0",
+            "name": "全透明",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "pid": "1",
+        "prop_name": "尺寸",
+        "values": [
+          {
+            "vid": "0",
+            "name": "50*70",
+            "imageUrl": ""
+          },
+          {
+            "vid": "1",
+            "name": "60*80",
+            "imageUrl": ""
+          },
+          {
+            "vid": "2",
+            "name": "80*100",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "skus": [
+      {
+        "skuid": "6244548211263",
+        "specid": "44c813fe50ad9cb6ade9b16a90d1be09",
+        "sale_price": "1.60",
+        "origin_price": "2.00",
+        "stock": 4995,
+        "props_ids": "0:0;1:1",
+        "props_names": "颜色:全透明;尺寸:60*80",
+        "package_info": {
+          "weight": 0.13,
+          "length": 17.0,
+          "width": 15.0,
+          "height": 5.0,
+          "volume": 1275.0
+        }
+      },
+      {
+        "skuid": "6244548211262",
+        "specid": "167a0a5500cdea84ff5a44283c27175e",
+        "sale_price": "1.28",
+        "origin_price": "1.60",
+        "stock": 5001,
+        "props_ids": "0:0;1:0",
+        "props_names": "颜色:全透明;尺寸:50*70",
+        "package_info": {
+          "weight": 0.1,
+          "length": 15.0,
+          "width": 13.0,
+          "height": 5.0,
+          "volume": 975.0
+        }
+      },
+      {
+        "skuid": "6244548211264",
+        "specid": "364899208245d29022eb9a38b8d6bca4",
+        "sale_price": "2.16",
+        "origin_price": "2.70",
+        "stock": 5000,
+        "props_ids": "0:0;1:2",
+        "props_names": "颜色:全透明;尺寸:80*100",
+        "package_info": {
+          "weight": 0.15,
+          "length": 22.0,
+          "width": 15.0,
+          "height": 5.0,
+          "volume": 1650.0
+        }
+      }
+    ],
+    "is_sold_out": false,
+    "stock": 14996,
+    "promotions": [
+      {
+        "promotion_id": "",
+        "title": "满50减5券",
+        "content": "入会有礼券",
+        "start_time": 1778515200000,
+        "end_time": null,
+        "type": "INTERACT",
+        "type_name": "互动优惠券"
+      },
+      {
+        "promotion_id": "",
+        "title": "满5050减50券",
+        "content": "满5050元减50元",
+        "start_time": 1778515200000,
+        "end_time": null,
+        "type": "COUPON",
+        "type_name": "优惠券"
+      },
+      {
+        "promotion_id": "",
+        "title": "满2026减26券",
+        "content": "满2026元减26元",
+        "start_time": 1778515200000,
+        "end_time": null,
+        "type": "COUPON",
+        "type_name": "优惠券"
+      }
+    ]
+  }
+}

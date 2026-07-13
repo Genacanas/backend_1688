@@ -258,6 +258,12 @@ def get_whitelist():
 class ProductPotentialUpdate(BaseModel):
     is_potential: bool
 
+class ProductTagUpdate(BaseModel):
+    tag: Optional[str] = None
+
+class ProductTagDelete(BaseModel):
+    tag_name: str
+
 @app.get("/api/products/potential")
 def get_potential_products(page: int = 1, limit: int = 100):
     if not supabase:
@@ -281,6 +287,26 @@ def update_product_potential(item_id: str, update: ProductPotentialUpdate):
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
         response = supabase.table('products').update({"is_potential": update.is_potential}).eq('item_id', item_id).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/products/tags/delete")
+def delete_product_tag(update: ProductTagDelete):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').update({"tag": None}).eq('tag', update.tag_name).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/products/{item_id}/tag")
+def update_product_tag(item_id: str, update: ProductTagUpdate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').update({"tag": update.tag}).eq('item_id', item_id).execute()
         return {"success": True, "data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
