@@ -300,7 +300,12 @@ def update_product_potential(item_id: str, update: ProductPotentialUpdate):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
-        response = supabase.table('products').update({"is_potential": update.is_potential}).eq('item_id', item_id).execute()
+        update_dict = {"is_potential": update.is_potential}
+        if update.is_potential:
+            update_dict["tag"] = "PENDING"
+        else:
+            update_dict["tag"] = None
+        response = supabase.table('products').update(update_dict).eq('item_id', item_id).execute()
         return {"success": True, "data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -326,6 +331,20 @@ def delete_product_tag(update: ProductTagDelete):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class TagRename(BaseModel):
+    old_name: str
+    new_name: str
+
+@app.put("/api/products/tags/rename")
+def rename_tag(update: TagRename):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').update({"tag": update.new_name}).eq('tag', update.old_name).execute()
+        return {"success": True, "updated": len(response.data)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/products/{item_id}/tag")
 def update_product_tag(item_id: str, update: ProductTagUpdate):
     if not supabase:
@@ -333,6 +352,20 @@ def update_product_tag(item_id: str, update: ProductTagUpdate):
     try:
         response = supabase.table('products').update({"tag": update.tag}).eq('item_id', item_id).execute()
         return {"success": True, "data": response.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class BulkTagUpdate(BaseModel):
+    item_ids: list[str]
+    tag: str | None
+
+@app.put("/api/products/bulk/tag")
+def bulk_update_tag(update: BulkTagUpdate):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').update({"tag": update.tag}).in_('item_id', update.item_ids).execute()
+        return {"success": True, "updated": len(response.data)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
