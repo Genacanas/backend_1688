@@ -481,6 +481,62 @@ def get_shop_products_by_name(company_name: str, page: int = 1, limit: int = 100
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/shops/name/{company_name}/tmapi-products")
+def get_shop_products_from_tmapi(company_name: str, page: int = 1, limit: int = 20):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        # 1. Lookup member_id for this shop
+        shop_res = supabase.table('shops').select('member_id').eq('company_name', company_name).limit(1).execute()
+        if not shop_res.data or not shop_res.data[0].get('member_id'):
+            return {"data": [], "total": 0, "page": page, "limit": limit, "error": "member_id not found"}
+        
+        member_id = shop_res.data[0]['member_id']
+        
+        # 2. Fetch from TMAPI
+        if not TMAPI_TOKEN:
+            raise HTTPException(status_code=500, detail="TMAPI_TOKEN missing")
+            
+        url = "http://api.tmapi.top/1688/shop/items"
+        params = {
+            "apiToken": TMAPI_TOKEN,
+            "member_id": member_id,
+            "page": page,
+            "page_size": limit,
+            "language": "en",
+            "sort": "sales"
+        }
+        tmapi_res = requests.get(url, params=params, timeout=15)
+        tmapi_res.raise_for_status()
+        data = tmapi_res.json()
+        
+        raw_items = data.get('data', [])
+        total = data.get('total', 0)
+        
+        # 3. Map to standard ProductCard format
+        mapped_items = []
+        for p in raw_items:
+            mapped_items.append({
+                "item_id": str(p.get("item_id", "")),
+                "chinese_title": p.get("title", ""),
+                "english_title": p.get("title", ""),
+                "price": float(p.get("price", 0) or 0),
+                "sales": int(p.get("sales", 0) or 0),
+                "image_url": p.get("pic_url", ""),
+                "product_url": p.get("detail_url", ""),
+                "company_name": company_name,
+                "moq": p.get("moq", 1)
+            })
+            
+        return {
+            "data": mapped_items,
+            "total": total,
+            "page": page,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/products/{item_id}/ai-summary")
 def generate_ai_summary(item_id: str):
     if not supabase:
