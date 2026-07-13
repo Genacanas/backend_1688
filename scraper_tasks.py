@@ -241,7 +241,7 @@ def fetch_shop_newest_products(member_id: str, company_name: str, logger: JobLog
 # ==========================================
 # UNIFIED PROCESS: Find New Shops
 # ==========================================
-def run_find_new_shops(job_id: str):
+def run_find_new_shops(job_id: str, start_page: int = 1, end_page: int = 2):
     logger = JobLogger(job_id, "find_new_shops")
     logger.log("Starting process: Searching for new shops from categories...")
     
@@ -272,7 +272,7 @@ def run_find_new_shops(job_id: str):
             initial_shops_count = logger.shops_found
             
             items = []
-            for page_num in range(1, 3):
+            for page_num in range(start_page, end_page + 1):
                 params = {
                     "apiToken": TMAPI_TOKEN,
                     "language": "en",

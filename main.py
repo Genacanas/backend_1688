@@ -95,10 +95,14 @@ def start_check_new_products(background_tasks: BackgroundTasks):
     background_tasks.add_task(scraper_tasks.run_check_new_products, job_id)
     return {"job_id": job_id, "message": "Job started"}
 
+class FindNewShopsParams(BaseModel):
+    start_page: int = 1
+    end_page: int = 2
+
 @app.post("/api/jobs/find-new-shops")
-def start_find_new_shops(background_tasks: BackgroundTasks):
+def start_find_new_shops(params: FindNewShopsParams, background_tasks: BackgroundTasks):
     job_id = create_job_record("find_new_shops")
-    background_tasks.add_task(scraper_tasks.run_find_new_shops, job_id)
+    background_tasks.add_task(scraper_tasks.run_find_new_shops, job_id, params.start_page, params.end_page)
     return {"job_id": job_id, "message": "Job started"}
 
 @app.post("/api/jobs/manual-deduplication")
