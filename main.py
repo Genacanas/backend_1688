@@ -584,10 +584,8 @@ def detect_product_category(item_id: str):
     
     # 2. Download clean categories
     try:
-        cat_url = "https://pxocbrhjycclrqklbvrl.supabase.co/storage/v1/object/public/config/categories_clean.json"
-        cat_res = requests.get(cat_url, timeout=10)
-        cat_res.raise_for_status()
-        categories_json_str = cat_res.text
+        cat_bytes = supabase.storage.from_('config').download('categories_clean.json')
+        categories_json_str = cat_bytes.decode('utf-8')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error downloading categories: {str(e)}")
 
