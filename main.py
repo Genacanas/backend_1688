@@ -281,6 +281,20 @@ def get_potential_products(page: int = 1, limit: int = 100):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/products/potential/tags/counts")
+def get_potential_tags_counts():
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        response = supabase.table('products').select('tag').eq('is_potential', True).limit(10000).execute()
+        from collections import Counter
+        tags_list = [r['tag'] for r in response.data if r.get('tag')]
+        tag_counts = dict(Counter(tags_list))
+        untagged_count = sum(1 for r in response.data if not r.get('tag'))
+        return {"success": True, "counts": tag_counts, "untagged": untagged_count, "total": len(response.data)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/products/{item_id}/potential")
 def update_product_potential(item_id: str, update: ProductPotentialUpdate):
     if not supabase:
