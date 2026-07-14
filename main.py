@@ -65,26 +65,45 @@ def load_amazon_vectors():
                     
         extract_paths(amazon_data.get("categories", []))
         print(f"Loaded {len(CATEGORY_PATHS)} Amazon category paths.")
-    except Exception as e:
-        print(f"Error loading amazon paths: {e}")
+    # Download vector parts if missing
+    num_chunks = 13
+    all_parts_exist = True
+    for i in range(1, num_chunks + 1):
+        chunk_path = f"../amazon_embeddings_part_{i}.npy"
+        if not os.path.exists(chunk_path):
+            all_parts_exist = False
+            break
+            
+    if not all_parts_exist and supabase:
+        print("Downloading amazon vector parts from Supabase (this will take a minute)...")
+        for i in range(1, num_chunks + 1):
+            chunk_filename = f"amazon_embeddings_part_{i}.npy"
+            chunk_path = f"../{chunk_filename}"
+            if not os.path.exists(chunk_path):
+                print(f"  -> Downloading {chunk_filename}...")
+                try:
+                    res = supabase.storage.from_('config').download(chunk_filename)
+                    with open(chunk_path, "wb") as f:
+                        f.write(res)
+                except Exception as e:
+                    print(f"Failed to download {chunk_filename}: {e}")
 
-    # Download vectors if missing
-    if not os.path.exists(npy_path) and supabase:
-        print(f"Downloading amazon_embeddings.npy from Supabase... this might take a few seconds (632MB)")
-        try:
-            res = supabase.storage.from_('config').download('amazon_embeddings.npy')
-            with open(npy_path, "wb") as f:
-                f.write(res)
-            print("Download complete.")
-        except Exception as e:
-            print(f"Failed to download embeddings: {e}")
-
-    # Load vectors
-    if os.path.exists(npy_path):
-        CAT_EMBEDDINGS_NP = np.load(npy_path)
+    # Load and concatenate vectors
+    parts = []
+    missing_parts = False
+    for i in range(1, num_chunks + 1):
+        chunk_path = f"../amazon_embeddings_part_{i}.npy"
+        if os.path.exists(chunk_path):
+            parts.append(np.load(chunk_path))
+        else:
+            missing_parts = True
+            break
+            
+    if not missing_parts:
+        CAT_EMBEDDINGS_NP = np.concatenate(parts, axis=0)
         print(f"Loaded {len(CAT_EMBEDDINGS_NP)} Amazon vectors into memory.")
     else:
-        print(f"FATAL ERROR: Vector file {npy_path} not found. Server features requiring vectors will fail.")
+        print("FATAL ERROR: Not all vector parts were found. Server features requiring vectors will fail.")
 
 
 
