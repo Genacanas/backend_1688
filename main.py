@@ -108,7 +108,10 @@ def load_amazon_vectors():
     else:
         print("FATAL ERROR: Not all vector parts were found. Server features requiring vectors will fail.")
 
-app = FastAPI(title="1688 Scraper API")
+app = FastAPI(title="1688 Scraper API", version="1.3.0")
+
+print("[STARTUP] FastAPI app created. Starting server...")
+
 
 @app.on_event("startup")
 def startup_event():
