@@ -881,6 +881,37 @@ def sync_novtra_products():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/novtra/products")
+def get_novtra_products():
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    try:
+        # Fetch products, we limit to 500 for the UI to be snappy, but we can fetch all or paginate
+        res = supabase.table('novtra_products').select('id, title, body, amazon_category, similarity_score').limit(500).execute()
+        
+        # We also need some fake 'competitor' data to match the mockup
+        # Let's mock a few competitors
+        competitors = [
+            {"id": 9991, "title": "Robot Vacuum Cleaner Mop Combo", "active": True, "reach": "1.2M", "adType": "Video", "source": "comp"},
+            {"id": 9992, "title": "Noise Cancelling Headphones Pro", "active": True, "reach": "850K", "adType": "Carousel", "source": "comp"},
+            {"id": 9993, "title": "Vitamin C Serum for Face", "active": False, "reach": "200K", "adType": "Image", "source": "comp"}
+        ]
+        
+        return {
+            "our_products": res.data or [],
+            "competitors": competitors,
+            "stats": {
+                "total_in_novtra": 49318, # mocked total
+                "synced": 2500,
+                "remaining": 49318 - 2500,
+                "avg_precision": 89.5,
+                "competitors_tracked": 3
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
