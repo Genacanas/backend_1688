@@ -981,7 +981,7 @@ def get_novtra_products(
             query = query.eq('amazon_category', category)
             
         start = (page - 1) * limit
-        end = start + limit - 1
+        end = start + limit
         res = query.range(start, end).execute()
         
         return {

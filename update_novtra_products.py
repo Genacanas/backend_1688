@@ -39,16 +39,16 @@ print("Fetching existing products from Supabase to backfill...")
 # Fetch all existing ids in supabase
 all_existing_ids = set()
 page = 0
-limit = 1000
+limit = 500
 while True:
     start = page * limit
-    end = start + limit - 1
+    end = start + limit
     res = supabase.table('novtra_products').select('id').range(start, end).execute()
     if not res.data:
         break
     for row in res.data:
         all_existing_ids.add(row['id'])
-    if len(res.data) < limit:
+    if len(res.data) == 0:
         break
     page += 1
 
