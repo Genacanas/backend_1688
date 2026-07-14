@@ -862,15 +862,54 @@ def sync_novtra_products():
             name = p.get('productName')
             if name and len(name) > 5 and 'UNKNOWN' not in name.upper() and p.get('category') != 'deleted':
                 body = ""
+                is_active = True
                 variants = p.get("products", [])
                 if variants and len(variants) > 0:
                     body = variants[0].get("body", "") or ""
                     body = body[:500] # Use more body for better semantic match
+                    is_active = variants[0].get("isActive", True)
                     
+                # Extract new fields
+                is_winner = p.get('isWinner', False)
+                thumbnail_url = p.get('thumbnailAmazonUrls')
+                if thumbnail_url:
+                    thumbnail_url = thumbnail_url.split(',')[0].strip()
+                elif p.get('media') and len(p.get('media')) > 0:
+                    thumbnail_url = p.get('media')[0].get('amazonUrl')
+                    
+                roas = p.get('ROAS')
+                
+                total_profit = 0
+                avg_cpc = None
+                profit_history = p.get('ProfitHistoryByWebsites', [])
+                if profit_history and len(profit_history) > 0:
+                    for ph in profit_history:
+                        profits = ph.get('Profits', [])
+                        for pr in profits:
+                            total_profit += pr.get('Profit', 0)
+                            if pr.get('CPC') and not avg_cpc:
+                                avg_cpc = pr.get('CPC')
+                                
+                eu_reach = None
+                ad_type = None
+                ad_creatives = p.get('adCreatives', [])
+                if ad_creatives and len(ad_creatives) > 0:
+                    eu_reach = str(ad_creatives[0].get('euTotalReach', ''))
+                    ctype = ad_creatives[0].get('creativeType', 0)
+                    ad_type = 'Video' if ctype == 1 else ('Carousel' if ctype == 2 else 'Image')
+                
                 new_products.append({
                     "id": pid,
                     "title": name,
-                    "body": body
+                    "body": body,
+                    "is_winner": is_winner,
+                    "thumbnail_url": thumbnail_url,
+                    "roas": roas,
+                    "total_profit": total_profit,
+                    "avg_cpc": avg_cpc,
+                    "eu_reach": eu_reach,
+                    "ad_type": ad_type,
+                    "is_active": is_active
                 })
                 
         if not new_products:
@@ -902,7 +941,15 @@ def sync_novtra_products():
                 "body": prod["body"],
                 "amazon_category": best_category,
                 "similarity_score": best_score,
-                "embedding": prod_embeddings[i]
+                "embedding": prod_embeddings[i],
+                "is_winner": prod["is_winner"],
+                "thumbnail_url": prod["thumbnail_url"],
+                "roas": prod["roas"],
+                "total_profit": prod["total_profit"],
+                "avg_cpc": prod["avg_cpc"],
+                "eu_reach": prod["eu_reach"],
+                "ad_type": prod["ad_type"],
+                "is_active": prod["is_active"]
             })
             
         # Bulk Insert in batches of 100 to avoid Payload Too Large and Read Timeout errors
@@ -914,32 +961,33 @@ def sync_novtra_products():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from fastapi import Query
+from typing import Optional
+
 @app.get("/api/novtra/products")
-def get_novtra_products():
+def get_novtra_products(
+    category: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(1000, ge=1, le=2000)
+):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
     try:
-        # Fetch products, we limit to 500 for the UI to be snappy, but we can fetch all or paginate
-        res = supabase.table('novtra_products').select('id, title, body, amazon_category, similarity_score').limit(500).execute()
+        query = supabase.table('novtra_products').select(
+            'id, title, body, amazon_category, similarity_score, is_winner, thumbnail_url, roas, total_profit, avg_cpc, eu_reach, ad_type, is_active'
+        )
         
-        # We also need some fake 'competitor' data to match the mockup
-        # Let's mock a few competitors
-        competitors = [
-            {"id": 9991, "title": "Robot Vacuum Cleaner Mop Combo", "active": True, "reach": "1.2M", "adType": "Video", "source": "comp"},
-            {"id": 9992, "title": "Noise Cancelling Headphones Pro", "active": True, "reach": "850K", "adType": "Carousel", "source": "comp"},
-            {"id": 9993, "title": "Vitamin C Serum for Face", "active": False, "reach": "200K", "adType": "Image", "source": "comp"}
-        ]
+        if category and category != 'All Products':
+            query = query.eq('amazon_category', category)
+            
+        start = (page - 1) * limit
+        end = start + limit - 1
+        res = query.range(start, end).execute()
         
         return {
             "our_products": res.data or [],
-            "competitors": competitors,
-            "stats": {
-                "total_in_novtra": 49318, # mocked total
-                "synced": 2500,
-                "remaining": 49318 - 2500,
-                "avg_precision": 89.5,
-                "competitors_tracked": 3
-            }
+            "competitors": [],
+            "stats": {}
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
