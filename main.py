@@ -23,6 +23,71 @@ if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase = None
+import numpy as np
+
+# --- AMAZON CATEGORY VECTORS ---
+AMAZON_EMBEDDINGS_FILE = "amazon_embeddings.npy" # Local in backend_1688
+CATEGORY_PATHS = []
+CAT_EMBEDDINGS_NP = None
+
+def load_amazon_vectors():
+    global CATEGORY_PATHS, CAT_EMBEDDINGS_NP
+    
+    json_path = "amazon_us_categories_full.json"
+    if not os.path.exists(json_path):
+        json_path = "../amazon_us_categories_full.json"
+        
+    if not os.path.exists(json_path) and supabase:
+        print(f"Downloading {json_path} from Supabase...")
+        try:
+            res = supabase.storage.from_('config').download('amazon_us_categories_full.json')
+            with open(json_path, "wb") as f:
+                f.write(res)
+        except Exception as e:
+            print(f"Failed to download JSON: {e}")
+
+    # Extract paths
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            amazon_data = json.load(f)
+            
+        def extract_paths(nodes, current_path=""):
+            for node in nodes:
+                name = node.get("name", "")
+                new_path = f"{current_path} > {name}" if current_path else name
+                CATEGORY_PATHS.append(new_path)
+                children = node.get("children", [])
+                if children:
+                    extract_paths(children, new_path)
+                    
+        extract_paths(amazon_data.get("categories", []))
+        print(f"Loaded {len(CATEGORY_PATHS)} Amazon category paths.")
+    except Exception as e:
+        print(f"Error loading amazon paths: {e}")
+
+    # Download vectors if missing
+    if not os.path.exists(AMAZON_EMBEDDINGS_FILE) and supabase:
+        print(f"Downloading {AMAZON_EMBEDDINGS_FILE} from Supabase... this might take a few seconds (632MB)")
+        try:
+            res = supabase.storage.from_('config').download(AMAZON_EMBEDDINGS_FILE)
+            with open(AMAZON_EMBEDDINGS_FILE, "wb") as f:
+                f.write(res)
+            print("Download complete.")
+        except Exception as e:
+            print(f"Failed to download embeddings: {e}")
+
+    # Load vectors
+    if os.path.exists(AMAZON_EMBEDDINGS_FILE):
+        CAT_EMBEDDINGS_NP = np.load(AMAZON_EMBEDDINGS_FILE)
+        print(f"Loaded {len(CAT_EMBEDDINGS_NP)} Amazon vectors into memory.")
+    else:
+        print(f"FATAL ERROR: Vector file {AMAZON_EMBEDDINGS_FILE} not found. Server features requiring vectors will fail.")
+
+
+@app.on_event("startup")
+def startup_event():
+    load_amazon_vectors()
+
 
 app = FastAPI(title="1688 Scraper API")
 
@@ -31,7 +96,7 @@ amazon_roots = []
 amazon_index = {}
 
 try:
-    with open("amazon_us_categories_full.json", "r", encoding="utf-8") as f:
+    with open("../amazon_us_categories_full.json", "r", encoding="utf-8") as f:
         amazon_data = json.load(f)
     
     roots = amazon_data.get("categories", [])
@@ -643,6 +708,8 @@ Product Properties:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
 
+
+
 @app.post("/api/products/{item_id}/category-detect")
 def detect_product_category(item_id: str):
     if not supabase:
@@ -660,7 +727,7 @@ def detect_product_category(item_id: str):
     
     # 2. Download clean categories
     try:
-        cat_bytes = supabase.storage.from_('config').download('categories_clean.json')
+        cat_bytes = supabase.storage.from_('config').download('amazon_us_categories_full.json')
         categories_json_str = cat_bytes.decode('utf-8')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error downloading categories: {str(e)}")
@@ -697,6 +764,96 @@ Categorías:
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
+
+@app.post("/api/jobs/sync-novtra")
+def sync_novtra_products():
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    if CAT_EMBEDDINGS_NP is None:
+        raise HTTPException(status_code=500, detail="Amazon embeddings not loaded in memory")
+        
+    try:
+        import requests
+        from openai import OpenAI
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        
+        # 1. Fetch from Novtra
+        NOVTRA_LOGIN = 'https://api.novtra.lt:5000/api/account/login'
+        NOVTRA_PRODUCTS = 'https://api.novtra.lt:5000/api/AllProducts/products'
+
+        login_res = requests.post(NOVTRA_LOGIN, json={'username': 'genaro', 'password': 'Gn7kR2mP9xLq!', 'rememberMe': True}, verify=False)
+        if login_res.status_code != 200:
+            raise HTTPException(status_code=500, detail="Novtra login failed")
+            
+        token = login_res.json().get('token')
+        prod_res = requests.get(NOVTRA_PRODUCTS, headers={'Authorization': f'Bearer {token}'}, verify=False)
+        all_products = prod_res.json()
+        
+        # 2. Get existing IDs from Supabase
+        existing_res = supabase.table('novtra_products').select('id').execute()
+        existing_ids = {row['id'] for row in existing_res.data or []}
+        
+        # 3. Filter and prepare new products
+        new_products = []
+        for p in all_products:
+            pid = p.get('id')
+            if pid in existing_ids:
+                continue
+                
+            name = p.get('productName')
+            if name and len(name) > 5 and 'UNKNOWN' not in name.upper() and p.get('category') != 'deleted':
+                body = ""
+                variants = p.get("products", [])
+                if variants and len(variants) > 0:
+                    body = variants[0].get("body", "") or ""
+                    body = body[:500] # Use more body for better semantic match
+                    
+                new_products.append({
+                    "id": pid,
+                    "title": name,
+                    "body": body
+                })
+                
+        if not new_products:
+            return {"message": "No new products to sync.", "synced_count": 0}
+            
+        # 4. Generate Embeddings for new products
+        prod_texts = [f"{p['title']} - {p['body']}" for p in new_products]
+        prod_embeddings = []
+        batch_size = 1000
+        for i in range(0, len(prod_texts), batch_size):
+            batch = prod_texts[i:i+batch_size]
+            emb_res = client.embeddings.create(input=batch, model="text-embedding-3-small")
+            for data in emb_res.data:
+                prod_embeddings.append(data.embedding)
+                
+        # 5. Math & Insert
+        insert_data = []
+        for i, prod in enumerate(new_products):
+            p_emb = np.array(prod_embeddings[i])
+            similarities = np.dot(CAT_EMBEDDINGS_NP, p_emb) / (np.linalg.norm(CAT_EMBEDDINGS_NP, axis=1) * np.linalg.norm(p_emb))
+            best_idx = np.argmax(similarities)
+            best_score = float(similarities[best_idx])
+            best_category = CATEGORY_PATHS[best_idx]
+            
+            insert_data.append({
+                "id": prod["id"],
+                "title": prod["title"],
+                "body": prod["body"],
+                "amazon_category": best_category,
+                "similarity_score": best_score,
+                "embedding": prod_embeddings[i]
+            })
+            
+        # Bulk Insert
+        supabase.table('novtra_products').upsert(insert_data).execute()
+        
+        return {"message": "Sync complete.", "synced_count": len(new_products)}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
