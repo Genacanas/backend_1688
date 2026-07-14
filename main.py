@@ -108,14 +108,11 @@ def load_amazon_vectors():
     else:
         print("FATAL ERROR: Not all vector parts were found. Server features requiring vectors will fail.")
 
-
+app = FastAPI(title="1688 Scraper API")
 
 @app.on_event("startup")
 def startup_event():
     load_amazon_vectors()
-
-
-app = FastAPI(title="1688 Scraper API")
 
 # --- AMAZON CATEGORIES INDEX ---
 amazon_roots = []
