@@ -982,7 +982,7 @@ def get_novtra_products(
             
         start = (page - 1) * limit
         end = start + limit
-        res = query.range(start, end).execute()
+        res = query.order('id').range(start, end).execute()
         
         return {
             "our_products": res.data or [],

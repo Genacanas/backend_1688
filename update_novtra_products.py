@@ -43,7 +43,7 @@ limit = 500
 while True:
     start = page * limit
     end = start + limit
-    res = supabase.table('novtra_products').select('id').range(start, end).execute()
+    res = supabase.table('novtra_products').select('id').order('id').range(start, end).execute()
     if not res.data:
         break
     for row in res.data:
