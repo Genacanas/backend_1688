@@ -871,9 +871,9 @@ def sync_novtra_products():
                 "embedding": prod_embeddings[i]
             })
             
-        # Bulk Insert in batches of 500 to avoid Payload Too Large errors
-        for i in range(0, len(insert_data), 500):
-            supabase.table('novtra_products').upsert(insert_data[i:i+500]).execute()
+        # Bulk Insert in batches of 100 to avoid Payload Too Large and Read Timeout errors
+        for i in range(0, len(insert_data), 100):
+            supabase.table('novtra_products').upsert(insert_data[i:i+100]).execute()
         
         return {"message": "Sync complete.", "synced_count": len(new_products)}
         
