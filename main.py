@@ -195,7 +195,7 @@ app.add_middleware(
 @app.get("/")
 @app.get("/health")
 @app.get("/healthz")
-def healthcheck():
+async def healthcheck():
     return {"status": "ok", "message": "1688 Scraper API is running", "version": "1.3.0"}
 
 # --- SCRAPER JOBS ENDPOINTS ---
@@ -274,7 +274,7 @@ def get_recent_jobs(limit: int = 20):
     return {"data": res.data}
 
 @app.get("/api/amazon-categories")
-def get_amazon_categories(parent_id: Optional[str] = None):
+async def get_amazon_categories(parent_id: Optional[str] = None):
     _ensure_categories_loaded()
     if not parent_id:
         return {"data": amazon_roots}
