@@ -1,5 +1,6 @@
 import os
 import json
+import threading
 import requests
 from datetime import datetime, timedelta, timezone
 import uuid
@@ -115,55 +116,62 @@ print("[STARTUP] FastAPI app created. Starting server...")
 
 @app.on_event("startup")
 def startup_event():
-    pass
+    # Start category download in a background thread so server responds instantly
+    t = threading.Thread(target=_load_categories_background, daemon=True)
+    t.start()
     # load_amazon_vectors()  # Disabled for Railway cloud to save RAM
 
-# --- AMAZON CATEGORIES INDEX (lazy-loaded on first request) ---
+
+# --- AMAZON CATEGORIES INDEX (loaded in background thread at startup) ---
 amazon_roots = []
 amazon_index = {}
 _categories_loaded = False
+_categories_loading = False
 
-def _ensure_categories_loaded():
-    global amazon_roots, amazon_index, _categories_loaded
-    if _categories_loaded:
+def _load_categories_background():
+    global amazon_roots, amazon_index, _categories_loaded, _categories_loading
+    if _categories_loaded or _categories_loading:
         return
-    _categories_loaded = True  # set early to avoid race conditions
+    _categories_loading = True
     try:
-        # Try to download from Supabase Storage (cloud) if file not present locally
-        if supabase:
-            print("Loading amazon_us_categories_full.json from Supabase Storage...")
-            raw = supabase.storage.from_('config').download('amazon_us_categories_full.json')
-            amazon_data = json.loads(raw.decode('utf-8'))
-        else:
-            raise Exception("Supabase not available")
+        if not supabase:
+            print("[CATEGORIES] Supabase not configured, skipping category load.")
+            return
+        print("[CATEGORIES] Downloading amazon_us_categories_full.json from Supabase Storage...")
+        raw = supabase.storage.from_('config').download('amazon_us_categories_full.json')
+        amazon_data = json.loads(raw.decode('utf-8'))
+        roots = amazon_data.get("categories", [])
+        amazon_roots = [{
+            "id": r.get("id"),
+            "name": r.get("name"),
+            "searchIndex": r.get("searchIndex"),
+            "childCount": r.get("childCount", 0)
+        } for r in roots]
+
+        def build_index(nodes):
+            for node in nodes:
+                children = node.get("children", [])
+                amazon_index[node["id"]] = [{
+                    "id": child.get("id"),
+                    "name": child.get("name"),
+                    "searchIndex": child.get("searchIndex"),
+                    "childCount": child.get("childCount", 0)
+                } for child in children]
+                if children:
+                    build_index(children)
+
+        build_index(roots)
+        _categories_loaded = True
+        print(f"[CATEGORIES] Loaded {len(amazon_roots)} roots, {len(amazon_index)} nodes.")
     except Exception as e:
-        print(f"Warning: Could not load categories from Supabase: {e}")
-        return
+        print(f"[CATEGORIES] Failed to load: {e}")
+    finally:
+        _categories_loading = False
 
-    roots = amazon_data.get("categories", [])
-    amazon_roots = [{
-        "id": r.get("id"),
-        "name": r.get("name"),
-        "searchIndex": r.get("searchIndex"),
-        "childCount": r.get("childCount", 0)
-    } for r in roots]
+# -- keep the old helper name for any callers, now just checks the flag --
+def _ensure_categories_loaded():
+    pass  # loading happens in background thread at startup
 
-    def build_index(nodes):
-        for node in nodes:
-            children = node.get("children", [])
-            amazon_index[node["id"]] = [{
-                "id": child.get("id"),
-                "name": child.get("name"),
-                "searchIndex": child.get("searchIndex"),
-                "childCount": child.get("childCount", 0)
-            } for child in children]
-            if children:
-                build_index(children)
-
-    build_index(roots)
-    print(f"Loaded Amazon Categories: {len(amazon_roots)} roots, {len(amazon_index)} nodes indexed.")
-
-# -------------------------------
 
 import scraper_tasks
 
