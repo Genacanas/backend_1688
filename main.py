@@ -178,8 +178,10 @@ app.add_middleware(
 
 # --- GENERAL ENDPOINTS ---
 @app.get("/")
+@app.get("/health")
+@app.get("/healthz")
 def healthcheck():
-    return {"status": "ok", "message": "1688 Scraper API is running"}
+    return {"status": "ok", "message": "1688 Scraper API is running", "version": "1.3.0"}
 
 # --- SCRAPER JOBS ENDPOINTS ---
 
