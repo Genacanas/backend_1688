@@ -978,7 +978,7 @@ def get_novtra_products(
         )
         
         if category and category != 'All Products':
-            query = query.eq('amazon_category', category)
+            query = query.ilike('amazon_category', f'{category}%')
             
         start = (page - 1) * limit
         end = start + limit
