@@ -140,7 +140,7 @@ def _load_categories_background():
         print("[CATEGORIES] Downloading amazon_us_categories_full.json from Supabase Storage...")
         raw = supabase.storage.from_('config').download('amazon_us_categories_full.json')
         amazon_data = json.loads(raw.decode('utf-8'))
-        roots = amazon_data.get("categories", [])
+        roots = amazon_data if isinstance(amazon_data, list) else amazon_data.get("categories", [])
         amazon_roots = [{
             "id": r.get("id"),
             "name": r.get("name"),
