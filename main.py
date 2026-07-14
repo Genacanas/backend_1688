@@ -115,50 +115,50 @@ def startup_event():
     pass
     # load_amazon_vectors()  # Disabled for Railway cloud to save RAM
 
-# --- AMAZON CATEGORIES INDEX ---
+# --- AMAZON CATEGORIES INDEX (lazy-loaded on first request) ---
 amazon_roots = []
 amazon_index = {}
+_categories_loaded = False
 
-try:
-    json_path = "../amazon_us_categories_full.json"
-    if not os.path.exists(json_path) and supabase:
-        print("Downloading amazon_us_categories_full.json from Supabase...")
-        res = supabase.storage.from_('config').download('amazon_us_categories_full.json')
-        with open(json_path, "wb") as f:
-            f.write(res)
+def _ensure_categories_loaded():
+    global amazon_roots, amazon_index, _categories_loaded
+    if _categories_loaded:
+        return
+    _categories_loaded = True  # set early to avoid race conditions
+    try:
+        # Try to download from Supabase Storage (cloud) if file not present locally
+        if supabase:
+            print("Loading amazon_us_categories_full.json from Supabase Storage...")
+            raw = supabase.storage.from_('config').download('amazon_us_categories_full.json')
+            amazon_data = json.loads(raw.decode('utf-8'))
+        else:
+            raise Exception("Supabase not available")
+    except Exception as e:
+        print(f"Warning: Could not load categories from Supabase: {e}")
+        return
 
-    with open(json_path, "r", encoding="utf-8") as f:
-        amazon_data = json.load(f)
-    
     roots = amazon_data.get("categories", [])
-    
-    # Store stripped roots
     amazon_roots = [{
         "id": r.get("id"),
         "name": r.get("name"),
         "searchIndex": r.get("searchIndex"),
         "childCount": r.get("childCount", 0)
     } for r in roots]
-    
+
     def build_index(nodes):
         for node in nodes:
             children = node.get("children", [])
-            stripped_children = []
-            for child in children:
-                stripped_children.append({
-                    "id": child.get("id"),
-                    "name": child.get("name"),
-                    "searchIndex": child.get("searchIndex"),
-                    "childCount": child.get("childCount", 0)
-                })
-            amazon_index[node["id"]] = stripped_children
+            amazon_index[node["id"]] = [{
+                "id": child.get("id"),
+                "name": child.get("name"),
+                "searchIndex": child.get("searchIndex"),
+                "childCount": child.get("childCount", 0)
+            } for child in children]
             if children:
                 build_index(children)
-                
+
     build_index(roots)
     print(f"Loaded Amazon Categories: {len(amazon_roots)} roots, {len(amazon_index)} nodes indexed.")
-except Exception as e:
-    print(f"Warning: Could not load amazon_us_categories_full.json: {e}")
 
 # -------------------------------
 
@@ -255,6 +255,7 @@ def get_recent_jobs(limit: int = 20):
 
 @app.get("/api/amazon-categories")
 def get_amazon_categories(parent_id: Optional[str] = None):
+    _ensure_categories_loaded()
     if not parent_id:
         return {"data": amazon_roots}
     if parent_id in amazon_index:
