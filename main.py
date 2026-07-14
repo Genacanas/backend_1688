@@ -120,7 +120,14 @@ amazon_roots = []
 amazon_index = {}
 
 try:
-    with open("../amazon_us_categories_full.json", "r", encoding="utf-8") as f:
+    json_path = "../amazon_us_categories_full.json"
+    if not os.path.exists(json_path) and supabase:
+        print("Downloading amazon_us_categories_full.json from Supabase...")
+        res = supabase.storage.from_('config').download('amazon_us_categories_full.json')
+        with open(json_path, "wb") as f:
+            f.write(res)
+
+    with open(json_path, "r", encoding="utf-8") as f:
         amazon_data = json.load(f)
     
     roots = amazon_data.get("categories", [])
@@ -165,6 +172,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- GENERAL ENDPOINTS ---
+@app.get("/")
+def healthcheck():
+    return {"status": "ok", "message": "1688 Scraper API is running"}
 
 # --- SCRAPER JOBS ENDPOINTS ---
 
