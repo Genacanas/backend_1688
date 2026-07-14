@@ -854,9 +854,10 @@ def sync_novtra_products():
                 
         # 5. Math & Insert
         insert_data = []
+        cat_norms = np.linalg.norm(CAT_EMBEDDINGS_NP, axis=1)
         for i, prod in enumerate(new_products):
             p_emb = np.array(prod_embeddings[i])
-            similarities = np.dot(CAT_EMBEDDINGS_NP, p_emb) / (np.linalg.norm(CAT_EMBEDDINGS_NP, axis=1) * np.linalg.norm(p_emb))
+            similarities = np.dot(CAT_EMBEDDINGS_NP, p_emb) / (cat_norms * np.linalg.norm(p_emb))
             best_idx = np.argmax(similarities)
             best_score = float(similarities[best_idx])
             best_category = CATEGORY_PATHS[best_idx]
@@ -870,8 +871,9 @@ def sync_novtra_products():
                 "embedding": prod_embeddings[i]
             })
             
-        # Bulk Insert
-        supabase.table('novtra_products').upsert(insert_data).execute()
+        # Bulk Insert in batches of 500 to avoid Payload Too Large errors
+        for i in range(0, len(insert_data), 500):
+            supabase.table('novtra_products').upsert(insert_data[i:i+500]).execute()
         
         return {"message": "Sync complete.", "synced_count": len(new_products)}
         
