@@ -112,7 +112,8 @@ app = FastAPI(title="1688 Scraper API")
 
 @app.on_event("startup")
 def startup_event():
-    load_amazon_vectors()
+    pass
+    # load_amazon_vectors()  # Disabled for Railway cloud to save RAM
 
 # --- AMAZON CATEGORIES INDEX ---
 amazon_roots = []
