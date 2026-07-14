@@ -141,22 +141,29 @@ def _load_categories_background():
         raw = supabase.storage.from_('config').download('amazon_us_categories_full.json')
         amazon_data = json.loads(raw.decode('utf-8'))
         roots = amazon_data if isinstance(amazon_data, list) else amazon_data.get("categories", [])
-        amazon_roots = [{
-            "id": r.get("id"),
-            "name": r.get("name"),
-            "searchIndex": r.get("searchIndex"),
-            "childCount": r.get("childCount", 0)
-        } for r in roots]
+        amazon_roots = []
+        for r in roots:
+            node_id = r.get("id", r.get("name", "Unknown"))
+            amazon_roots.append({
+                "id": node_id,
+                "name": r.get("name", "Unknown"),
+                "searchIndex": r.get("searchIndex", ""),
+                "childCount": r.get("childCount", len(r.get("children", [])))
+            })
 
         def build_index(nodes):
             for node in nodes:
+                node_id = node.get("id", node.get("name", "Unknown"))
                 children = node.get("children", [])
-                amazon_index[node["id"]] = [{
-                    "id": child.get("id"),
-                    "name": child.get("name"),
-                    "searchIndex": child.get("searchIndex"),
-                    "childCount": child.get("childCount", 0)
-                } for child in children]
+                amazon_index[node_id] = []
+                for child in children:
+                    child_id = child.get("id", child.get("name", "Unknown"))
+                    amazon_index[node_id].append({
+                        "id": child_id,
+                        "name": child.get("name", "Unknown"),
+                        "searchIndex": child.get("searchIndex", ""),
+                        "childCount": child.get("childCount", len(child.get("children", [])))
+                    })
                 if children:
                     build_index(children)
 
