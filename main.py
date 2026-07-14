@@ -26,7 +26,6 @@ else:
 import numpy as np
 
 # --- AMAZON CATEGORY VECTORS ---
-AMAZON_EMBEDDINGS_FILE = "amazon_embeddings.npy" # Local in backend_1688
 CATEGORY_PATHS = []
 CAT_EMBEDDINGS_NP = None
 
@@ -36,6 +35,10 @@ def load_amazon_vectors():
     json_path = "amazon_us_categories_full.json"
     if not os.path.exists(json_path):
         json_path = "../amazon_us_categories_full.json"
+        
+    npy_path = "amazon_embeddings.npy"
+    if not os.path.exists(npy_path):
+        npy_path = "../amazon_embeddings.npy"
         
     if not os.path.exists(json_path) and supabase:
         print(f"Downloading {json_path} from Supabase...")
@@ -66,22 +69,23 @@ def load_amazon_vectors():
         print(f"Error loading amazon paths: {e}")
 
     # Download vectors if missing
-    if not os.path.exists(AMAZON_EMBEDDINGS_FILE) and supabase:
-        print(f"Downloading {AMAZON_EMBEDDINGS_FILE} from Supabase... this might take a few seconds (632MB)")
+    if not os.path.exists(npy_path) and supabase:
+        print(f"Downloading amazon_embeddings.npy from Supabase... this might take a few seconds (632MB)")
         try:
-            res = supabase.storage.from_('config').download(AMAZON_EMBEDDINGS_FILE)
-            with open(AMAZON_EMBEDDINGS_FILE, "wb") as f:
+            res = supabase.storage.from_('config').download('amazon_embeddings.npy')
+            with open(npy_path, "wb") as f:
                 f.write(res)
             print("Download complete.")
         except Exception as e:
             print(f"Failed to download embeddings: {e}")
 
     # Load vectors
-    if os.path.exists(AMAZON_EMBEDDINGS_FILE):
-        CAT_EMBEDDINGS_NP = np.load(AMAZON_EMBEDDINGS_FILE)
+    if os.path.exists(npy_path):
+        CAT_EMBEDDINGS_NP = np.load(npy_path)
         print(f"Loaded {len(CAT_EMBEDDINGS_NP)} Amazon vectors into memory.")
     else:
-        print(f"FATAL ERROR: Vector file {AMAZON_EMBEDDINGS_FILE} not found. Server features requiring vectors will fail.")
+        print(f"FATAL ERROR: Vector file {npy_path} not found. Server features requiring vectors will fail.")
+
 
 
 @app.on_event("startup")
