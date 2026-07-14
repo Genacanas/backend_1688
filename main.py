@@ -65,6 +65,9 @@ def load_amazon_vectors():
                     
         extract_paths(amazon_data.get("categories", []))
         print(f"Loaded {len(CATEGORY_PATHS)} Amazon category paths.")
+    except Exception as e:
+        print(f"Error loading amazon paths: {e}")
+        
     # Download vector parts if missing
     num_chunks = 13
     all_parts_exist = True
