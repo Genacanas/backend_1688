@@ -573,7 +573,50 @@ def update_shop_status(company_name: str, update: ShopStatusUpdate):
         raise HTTPException(status_code=500, detail="Supabase no está configurado")
     try:
         response = supabase.table('shops').update({"status": update.status}).eq('company_name', company_name).execute()
-        return {"success": True, "data": response.data}
+        return {"message": f"Estado actualizado a {update.status}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/shops/saved-stats")
+def get_saved_shops_stats():
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado")
+    try:
+        res = supabase.table('products').select('*').eq('is_potential', True).execute()
+        products = res.data or []
+        
+        shops_dict = {}
+        for p in products:
+            c_name = p.get('company_name')
+            if not c_name:
+                c_name = "Unknown Shop"
+            if c_name not in shops_dict:
+                shops_dict[c_name] = []
+            shops_dict[c_name].append(p)
+            
+        company_names = list(shops_dict.keys())
+        shop_info = {}
+        if company_names:
+            chunk_size = 50
+            for i in range(0, len(company_names), chunk_size):
+                chunk = company_names[i:i+chunk_size]
+                s_res = supabase.table('shops').select('company_name, shop_url, composite_score').in_('company_name', chunk).execute()
+                for s in (s_res.data or []):
+                    shop_info[s['company_name']] = s
+                    
+        result = []
+        for c_name, prods in shops_dict.items():
+            info = shop_info.get(c_name, {})
+            result.append({
+                "company_name": c_name,
+                "shop_url": info.get('shop_url'),
+                "composite_score": info.get('composite_score'),
+                "saved_count": len(prods),
+                "products": prods
+            })
+            
+        result.sort(key=lambda x: x['saved_count'], reverse=True)
+        return {"data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
